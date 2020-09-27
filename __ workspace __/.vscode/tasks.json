@@ -1,0 +1,27 @@
+{
+	"version": "2.0.0",
+	"presentation": {
+		"reveal": "never",
+		"panel": "shared",
+		"showReuseMessage": false,
+		"clear": true,
+		"revealProblems": "onProblem",
+	},
+	"problemMatcher":"$msCompile",
+	"type": "shell",
+	"options": {"cwd": "../project"},
+	"tasks": [
+		{
+			"label": "Build CL",
+			"group": "build",
+			"command": "${workspaceFolder}/../project/build_cl.bat",
+			"problemMatcher": "$msCompile",
+		},
+		{
+			"label": "Build Clang",
+			"group": "build",
+			"command": "${workspaceFolder}/../project/build_clang.bat",
+			"problemMatcher": "$gcc",
+		},
+	],
+}

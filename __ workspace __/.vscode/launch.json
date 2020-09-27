@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch",
+            "request": "launch",
+            "program": "ninety_nine.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/../bin",
+            "stopAtEntry": false,
+            "externalConsole": true,
+            "type": "cppvsdbg",
+        },
+    ]
+}
