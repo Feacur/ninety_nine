@@ -22,7 +22,8 @@ if not defined auto_linking (
 )
 
 rem > OPTIONS
-set compiler=-Werror -Weverything -fno-exceptions -fno-rtti
+set defines=-D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DNOMINMAX
+set compiler=-Werror -Weverything -fno-exceptions -fno-rtti %defines%
 set linker=-nologo -WX
 
 if defined debug (

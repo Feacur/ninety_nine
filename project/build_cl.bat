@@ -18,7 +18,8 @@ call "vcvarsall.bat" x64
 popd
 
 rem > OPTIONS
-set compiler=-nologo -WX -W4 -EHa- -GR- -diagnostics:caret
+set defines=-D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DNOMINMAX
+set compiler=-nologo -diagnostics:caret -WX -W4 -EHa- -GR- %defines%
 set linker=-nologo -WX
 
 if defined debug (
