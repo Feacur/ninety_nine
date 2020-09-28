@@ -7,22 +7,24 @@ set VSLANG=1033
 pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
 call "vcvarsall.bat" x64
 popd
-set shipping=-O2
-set debug=-Od -Zi -Zf -JMC
-set common=-std:c11 -nologo -WX -W4 -EHa- -GR- -diagnostics:caret
 
-rem rem release: 
-rem rem debug: 
+set compiler=-nologo -std:c11 -WX -W4 -EHa- -GR- -diagnostics:caret
+set compiler_dbg=-Od -JMC -Zi
+set compiler_shp=-O2
+set linker=-nologo -WX -incremental:no
+set linker_dbg=-debug:full
 
 echo ---- BUILD ---- %time%
-cd ../bin
+cd ..
+if not exist bin mkdir bin
+cd bin
 
 rem compile with linking
-cl "../project/unity_build.c" -I "../engine" -Fo"ninety_nine.obj" -Fe"ninety_nine.exe" %common% %debug%
+cl "../project/unity_build.c" -I "../engine" -Fo"ninety_nine.obj" -Fe"ninety_nine.exe" %compiler% %compiler_dbg% -link %linker%
 
 rem compile without linking, then link
-rem cl "../project/unity_build.c" -I "../engine" -Fo"ninety_nine.obj" %common% %debug%
-rem link "ninety_nine.obj" -OUT:"ninety_nine.exe" -nologo
+rem cl -c "../project/unity_build.c" -I "../engine" -Fo"ninety_nine.obj" %compiler% %compiler_dbg%
+rem link "ninety_nine.obj" -OUT:"ninety_nine.exe" %linker% %linker_dbg%
 
 cd ../project
 echo ---- DONE ---- %time%

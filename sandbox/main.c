@@ -1,6 +1,7 @@
-#include "engine.h"
+#include "code.h"
 
 int main(int argc, char * argv[]) {
 	(void)argc; (void)argv;
-	printf("Hello, World!");
+	printf("Hello, World!\n");
+	getchar();
 }

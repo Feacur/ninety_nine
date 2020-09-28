@@ -30,7 +30,8 @@
 			"${workspaceFolder:__ workspace __}/../engine",
 		],
 		"C_Cpp.default.defines": [],
-		"C_Cpp.intelliSenseCachePath": "${workspaceFolder:__ workspace __}/../bin-int",
+		"C_Cpp.intelliSenseCachePath": ".",
+		// "C_Cpp.intelliSenseCacheSize": 0,
 	},
 	"extensions": {
 		"recommendations": [
