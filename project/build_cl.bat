@@ -2,29 +2,44 @@
 chcp 65001
 
 rem https://docs.microsoft.com/en-us/cpp/build/reference/compiler-options
+rem https://docs.microsoft.com/en-us/cpp/build/reference/linker-options
 
+rem make tools available
 set VSLANG=1033
 pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
 call "vcvarsall.bat" x64
 popd
 
+rem options
+set target=ninety_nine
 set compiler=-nologo -std:c11 -WX -W4 -EHa- -GR- -diagnostics:caret
-set compiler_dbg=-Od -JMC -Zi
-set compiler_shp=-O2
-set linker=-nologo -WX -incremental:no
-set linker_dbg=-debug:full
+set linker=-nologo -WX
 
-echo ---- BUILD ---- %time%
+set debug=dummy
+if defined debug (
+	set compiler=%compiler% -Od -Zi
+	set linker=%linker% -debug:full
+) else (
+	set compiler=%compiler% -O2
+	set linker=%linker% -debug:no
+)
+
+rem process
+set timeStart=%time%
 cd ..
 if not exist bin mkdir bin
 cd bin
 
 rem compile with linking
-cl "../project/unity_build.c" -I "../engine" -Fo"ninety_nine.obj" -Fe"ninety_nine.exe" %compiler% %compiler_dbg% -link %linker%
+cl "../project/unity_build.c" -I "../engine" -Fo"%target%.obj" -Fe"%target%.exe" %compiler% -link %linker%
 
 rem compile without linking, then link
-rem cl -c "../project/unity_build.c" -I "../engine" -Fo"ninety_nine.obj" %compiler% %compiler_dbg%
-rem link "ninety_nine.obj" -OUT:"ninety_nine.exe" %linker% %linker_dbg%
+rem cl -c "../project/unity_build.c" -I "../engine" -Fo"%target%.obj" %compiler%
+rem link "%target%.obj" -OUT:"%target%.exe" %linker%
 
 cd ../project
-echo ---- DONE ---- %time%
+set timeStop=%time%
+
+rem report
+echo start: %timeStart%
+echo stop:  %timeStop%
