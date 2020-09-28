@@ -20,8 +20,9 @@ popd
 rem > OPTIONS
 set includes=-I".." -I"../third_party"
 set defines=-D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DNOMINMAX
+set libs=user32.lib
 set compiler=-nologo -diagnostics:caret -WX -W4 -EHa- -GR- %includes% %defines%
-set linker=-nologo -WX
+set linker=-nologo -WX -subsystem:console
 
 if defined debug (
 	set compiler=%compiler% -Od -Zi
@@ -38,10 +39,10 @@ if not exist bin mkdir bin
 cd bin
 
 if defined unity_build (
-	cl -std:c11 "../project/unity_build.c" -Fe"ninety_nine.exe" %compiler% -link %linker%
+	cl -std:c11 "../project/unity_build.c" -Fe"ninety_nine.exe" %compiler% -link %libs% %linker%
 ) else ( rem alternatively, compile a set of translation units
-	cl -std:c11 -c "../engine/*.c" "../sandbox/*.c" %compiler%
-	link "*.obj" -out:"ninety_nine.exe" %linker%
+	cl -std:c11 -c "../engine/internal/*.c" "../engine/platform_windows/*.c" "../sandbox/*.c" %compiler%
+	link "*.obj" -out:"ninety_nine.exe" %libs% %linker%
 )
 
 cd ../project

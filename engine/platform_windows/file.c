@@ -38,7 +38,7 @@ size_t engine_file_read(cstring path, u8 ** buffer, size_t * buffer_size) {
 		return 0;
 	}
 
-	*buffer_size = (size_t)file_size.QuadPart + 1;
+	*buffer_size = (size_t)file_size.QuadPart;
 	*buffer = ENGINE_MALLOC(*buffer_size);
 
 	DWORD number_of_bytes_read;
