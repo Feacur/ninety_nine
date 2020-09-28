@@ -22,7 +22,7 @@ if not defined auto_linking (
 )
 
 rem > OPTIONS
-set includes=-I".."
+set includes=-I".." -I"../third_party"
 set defines=-D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DNOMINMAX
 set compiler=-Werror -Weverything -fno-exceptions -fno-rtti %includes% %defines%
 set linker=-nologo -WX

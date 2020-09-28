@@ -13,6 +13,9 @@
 			"path": "../project"
 		},
 		{
+			"path": "../third_party"
+		},
+		{
 			"path": "../assets"
 		},
 		{
@@ -37,6 +40,7 @@
 		// "C_Cpp.default.intelliSenseMode": "msvc-x64",
 		"C_Cpp.default.includePath": [
 			"${workspaceFolder:__ workspace __}/..",
+			"${workspaceFolder:__ workspace __}/../third_party",
 		],
 		"C_Cpp.default.defines": [
 			"_CRT_SECURE_NO_WARNINGS",

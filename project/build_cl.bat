@@ -18,7 +18,7 @@ call "vcvarsall.bat" x64
 popd
 
 rem > OPTIONS
-set includes=-I".."
+set includes=-I".." -I"../third_party"
 set defines=-D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DNOMINMAX
 set compiler=-nologo -diagnostics:caret -WX -W4 -EHa- -GR- %includes% %defines%
 set linker=-nologo -WX
