@@ -9,6 +9,8 @@ rem https://docs.microsoft.com/en-us/cpp/build/reference/linker-options
 
 rem > PREPARE TOOLS
 rem set "PATH=%PATH%;C:/Program Files/LLVM/bin"
+rem possible `clang-cl` instead `cl -std:c11`
+rem possible `lld-link` instead `link`
 
 set VSLANG=1033
 pushd "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
@@ -16,7 +18,7 @@ call "vcvarsall.bat" x64
 popd
 
 rem > OPTIONS
-set compiler=-nologo -std:c11 -WX -W4 -EHa- -GR- -diagnostics:caret
+set compiler=-nologo -WX -W4 -EHa- -GR- -diagnostics:caret
 set linker=-nologo -WX
 
 if defined debug (
@@ -34,12 +36,10 @@ if not exist bin mkdir bin
 cd bin
 
 if defined unity_build (
-	cl "../project/unity_build.c" -I".." -Fe"ninety_nine.exe" %compiler% -link %linker%
+	cl -std:c11 "../project/unity_build.c" -I".." -Fe"ninety_nine.exe" %compiler% -link %linker%
 ) else ( rem alternatively, compile a set of translation units
-	cl -c "../project/unity_build_engine.c" "../project/unity_build_sandbox.c" -I".." %compiler%
-	link "unity_build_engine.obj" "unity_build_sandbox.obj" -out:"ninety_nine.exe" %linker%
-	rem cl -c "../engine/*.c" "../sandbox/*.c" -I".." %compiler%
-	rem link "*.obj" -out:"ninety_nine.exe" %linker%
+	cl -std:c11 -c "../engine/*.c" "../sandbox/*.c" -I".." %compiler%
+	link "*.obj" -out:"ninety_nine.exe" %linker%
 )
 
 cd ../project

@@ -22,7 +22,7 @@ if not defined auto_linking (
 )
 
 rem > OPTIONS
-set compiler=-std=c99 -Werror -Weverything -fno-exceptions -fno-rtti
+set compiler=-Werror -Weverything -fno-exceptions -fno-rtti
 set linker=-nologo -WX
 
 if defined debug (
@@ -40,12 +40,10 @@ if not exist bin mkdir bin
 cd bin
 
 if defined unity_build (
-	clang "../project/unity_build.c" -I".." -o"ninety_nine.exe" %compiler%
+	clang -std=c99 "../project/unity_build.c" -I".." -o"ninety_nine.exe" %compiler%
 ) else ( rem alternatively, compile a set of translation units
-	clang -c "../project/unity_build_engine.c" "../project/unity_build_sandbox.c" -I".." %compiler%
-	lld-link "unity_build_engine.o" "unity_build_sandbox.o" libcmt.lib -out:"ninety_nine.exe" %linker%
-	rem clang -c "../engine/*.c" "../sandbox/*.c" -I".." %compiler%
-	rem lld-link "*.o" libcmt.lib -out:"ninety_nine.exe" %linker%
+	clang -std=c99 -c "../engine/*.c" "../sandbox/*.c" -I".." %compiler%
+	lld-link "*.o" libcmt.lib -out:"ninety_nine.exe" %linker%
 )
 
 cd ../project
