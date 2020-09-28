@@ -1,23 +1,17 @@
-#include "engine/code.h"
-#include "engine/types.h"
-#include "engine/dummy.h"
+#include "engine/api/code.h"
+#include "engine/api/types.h"
+#include "engine/api/file.h"
+#include "engine/api/dummy.h"
 
 int main(int argc, char * argv[]) {
 	(void)argc; (void)argv;
 	dummy();
 
-	FILE * file = fopen("assets/settings.cfg", "rb");
-	fseek(file, 0, SEEK_END);
-	size_t file_size = (size_t)ftell(file);
-	fseek(file, 0, SEEK_SET);
-	u8 * buffer = malloc((size_t)file_size + 1);
-	size_t bytes_read = fread(buffer, sizeof(u8), file_size, file);
-	fclose(file);
-
-	printf("file size %zd; bytes read %zd\n", file_size, bytes_read);
-
-	buffer[file_size] = '\0';
+	u8 * buffer = NULL; size_t buffer_size = 0;
+	engine_file_read("assets/settings.cfg", &buffer, &buffer_size);
 	printf("%s\n", buffer);
+
+	printf("file time: %zd\n", engine_file_time("assets/settings.cfg"));
 
 	free(buffer);
 
