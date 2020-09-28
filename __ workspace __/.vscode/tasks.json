@@ -23,5 +23,11 @@
 			"command": "${workspaceFolder}/../project/build_clang.bat",
 			"problemMatcher": "$gcc",
 		},
+		{
+			"label": "Build Clang-CL",
+			"group": "build",
+			"command": "${workspaceFolder}/../project/build_clang_cl.bat",
+			"problemMatcher": "$gcc",
+		},
 	],
 }

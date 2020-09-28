@@ -10,7 +10,6 @@ rem make tools available
 SET PATH=%PATH%;"C:/Program Files/LLVM/bin"
 
 rem options
-set target=ninety_nine
 set compiler=-std=c99 -Werror -Weverything -fno-exceptions -fno-rtti
 
 set debug=dummy
@@ -27,7 +26,7 @@ if not exist bin mkdir bin
 cd bin
 
 rem compile with linking, regular tools
-clang "../project/unity_build.c" -I"../engine" -o"%target%.exe" %compiler%
+clang "../project/unity_build.c" -I".." -o"ninety_nine.exe" %compiler%
 
 cd ../project
 set timeStop=%time%
