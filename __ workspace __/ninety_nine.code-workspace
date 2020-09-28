@@ -10,11 +10,14 @@
 			"path": "../sandbox"
 		},
 		{
+			"path": "../project"
+		},
+		{
 			"path": "../assets"
 		},
 		{
-			"path": "../project"
-		}
+			"path": "../bin"
+		},
 	],
 	"settings": {
 		// editor
@@ -27,10 +30,11 @@
 		"C_Cpp.intelliSenseEngine": "Default",
 		"C_Cpp.default.cStandard": "c99",
 		"C_Cpp.default.cppStandard": "c++11",
-		"C_Cpp.default.compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.24.28314/bin/Hostx64/x64/cl.exe",
-		"C_Cpp.default.intelliSenseMode": "msvc-x64",
-		// "C_Cpp.default.compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
-		// "C_Cpp.default.intelliSenseMode": "clang-x64",
+		// "C_Cpp.default.windowsSdkVersion": "10.0.18362.0",
+		"C_Cpp.default.compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+		"C_Cpp.default.intelliSenseMode": "clang-x64",
+		// "C_Cpp.default.compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.24.28314/bin/Hostx64/x64/cl.exe",
+		// "C_Cpp.default.intelliSenseMode": "msvc-x64",
 		"C_Cpp.default.includePath": [
 			"${workspaceFolder:__ workspace __}/..",
 		],

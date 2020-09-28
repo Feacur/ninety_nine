@@ -39,7 +39,7 @@ size_t engine_file_read(cstring path, u8 ** buffer, size_t * buffer_size) {
 	}
 
 	*buffer_size = (size_t)file_size.QuadPart + 1;
-	*buffer = malloc(*buffer_size);
+	*buffer = ENGINE_MALLOC(*buffer_size);
 
 	DWORD number_of_bytes_read;
 	if (!ReadFile(handle, *buffer, (DWORD)file_size.QuadPart, &number_of_bytes_read, NULL)) {

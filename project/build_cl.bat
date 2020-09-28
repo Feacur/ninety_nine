@@ -18,8 +18,9 @@ call "vcvarsall.bat" x64
 popd
 
 rem > OPTIONS
+set includes=-I".."
 set defines=-D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DNOMINMAX
-set compiler=-nologo -diagnostics:caret -WX -W4 -EHa- -GR- %defines%
+set compiler=-nologo -diagnostics:caret -WX -W4 -EHa- -GR- %includes% %defines%
 set linker=-nologo -WX
 
 if defined debug (
@@ -37,9 +38,9 @@ if not exist bin mkdir bin
 cd bin
 
 if defined unity_build (
-	cl -std:c11 "../project/unity_build.c" -I".." -Fe"ninety_nine.exe" %compiler% -link %linker%
+	cl -std:c11 "../project/unity_build.c" -Fe"ninety_nine.exe" %compiler% -link %linker%
 ) else ( rem alternatively, compile a set of translation units
-	cl -std:c11 -c "../engine/*.c" "../sandbox/*.c" -I".." %compiler%
+	cl -std:c11 -c "../engine/*.c" "../sandbox/*.c" %compiler%
 	link "*.obj" -out:"ninety_nine.exe" %linker%
 )
 
