@@ -1,5 +1,5 @@
-#ifndef __khrplatform_h_
-#define __khrplatform_h_
+#ifndef TP_KHRPLATFORM
+#define TP_KHRPLATFORM
 
 /*
 ** Copyright (c) 2008-2018 The Khronos Group Inc.
@@ -287,4 +287,4 @@ typedef enum {
     KHRONOS_BOOLEAN_ENUM_FORCE_SIZE = KHRONOS_MAX_ENUM
 } khronos_boolean_enum_t;
 
-#endif /* __khrplatform_h_ */
+#endif /* TP_KHRPLATFORM */

@@ -1,5 +1,6 @@
 #include "engine/api/code.h"
 #include "engine/api/types.h"
+#include "ogl_context.h"
 
 #include <Windows.h>
 
@@ -17,6 +18,7 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 
 struct Engine_Window {
 	HWND hwnd;
+	struct Rendering_Context_OGL * rendering_context;
 };
 
 struct Engine_Window * engine_window_create(void) {
@@ -44,13 +46,17 @@ bool engine_window_is_active(struct Engine_Window * window) {
 	return window->hwnd;
 }
 
+void engine_window_init_context(struct Engine_Window * window) {
+	window->rendering_context = engine_ogl_context_create(window);
+}
+
 //
-// internal API
+// system API
 //
 
-#include "window_internal.h"
+#include "window_system.h"
 
-void engine_window_internal_register_class(void) {
+void engine_system_register_window_class(void) {
 	RegisterClassExA(&(WNDCLASSEXA){
 		.cbSize        = sizeof(WNDCLASSEXA),
 		.lpszClassName = ENGINE_WINDOW_CLASS_NAME,
@@ -61,8 +67,18 @@ void engine_window_internal_register_class(void) {
 	});
 }
 
-void engine_window_internal_unregister_class(void) {
+void engine_system_unregister_window_class(void) {
 	UnregisterClassA(ENGINE_WINDOW_CLASS_NAME, GetModuleHandleA(NULL));
+}
+
+//
+// context API
+//
+
+#include "window_context.h"
+
+HDC engine_window_get_hdc(struct Engine_Window * window) {
+	return GetDC(window->hwnd);
 }
 
 //

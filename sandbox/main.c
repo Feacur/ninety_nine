@@ -20,6 +20,7 @@ int main(int argc, char * argv[]) {
 	free(buffer);
 
 	struct Engine_Window * window = engine_window_create();
+	engine_window_init_context(window);
 	while (!engine_system_should_close) {
 		if (!window) { break; }
 		if (!engine_window_is_active(window)) { break; }

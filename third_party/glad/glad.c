@@ -30,7 +30,7 @@ static void* get_proc(const char *namez);
 #ifndef _WINDOWS_
 #undef APIENTRY
 #endif
-#include <windows.h>
+#include <Windows.h>
 static HMODULE libGL;
 
 typedef void* (APIENTRYP PFNWGLGETPROCADDRESSPROC_PRIVATE)(const char*);
@@ -159,7 +159,7 @@ int gladLoadGL(void) {
 struct gladGLversionStruct GLVersion = { 0, 0 };
 
 #if defined(GL_ES_VERSION_3_0) || defined(GL_VERSION_3_0)
-#define _GLAD_IS_SOME_NEW_VERSION 1
+#define TP_GLAD_IS_SOME_NEW_VERSION 1
 #endif
 
 static int max_loaded_major;
@@ -170,11 +170,11 @@ static int num_exts_i = 0;
 static char **exts_i = NULL;
 
 static int get_exts(void) {
-#ifdef _GLAD_IS_SOME_NEW_VERSION
+#ifdef TP_GLAD_IS_SOME_NEW_VERSION
     if(max_loaded_major < 3) {
 #endif
         exts = (const char *)glGetString(GL_EXTENSIONS);
-#ifdef _GLAD_IS_SOME_NEW_VERSION
+#ifdef TP_GLAD_IS_SOME_NEW_VERSION
     } else {
         unsigned int index;
 
@@ -215,7 +215,7 @@ static void free_exts(void) {
 }
 
 static int has_ext(const char *ext) {
-#ifdef _GLAD_IS_SOME_NEW_VERSION
+#ifdef TP_GLAD_IS_SOME_NEW_VERSION
     if(max_loaded_major < 3) {
 #endif
         const char *extensions;
@@ -239,7 +239,7 @@ static int has_ext(const char *ext) {
             }
             extensions = terminator;
         }
-#ifdef _GLAD_IS_SOME_NEW_VERSION
+#ifdef TP_GLAD_IS_SOME_NEW_VERSION
     } else {
         int index;
         if(exts_i == NULL) return 0;

@@ -1,5 +1,6 @@
 #include "engine/api/code.h"
-#include "window_internal.h"
+#include "window_system.h"
+#include "ogl_system.h"
 
 #include <signal.h>
 #include <Windows.h>
@@ -16,7 +17,8 @@ static void impl_signal_handler(int value);
 bool engine_system_should_close;
 
 void engine_system_init(void) {
-	engine_window_internal_register_class();
+	engine_system_register_window_class();
+	engine_system_init_opengl();
 
 	signal(SIGABRT, impl_signal_handler);
 	signal(SIGFPE,  impl_signal_handler);
@@ -27,7 +29,8 @@ void engine_system_init(void) {
 }
 
 void engine_system_deinit(void) {
-	engine_window_internal_unregister_class();
+	engine_system_unregister_window_class();
+	engine_system_deinit_opengl();
 }
 
 void engine_system_poll_events(void) {
