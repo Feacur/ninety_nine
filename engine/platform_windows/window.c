@@ -131,14 +131,12 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 			// }
 			window->hwnd = NULL;
 			DestroyWindow(hwnd);
-			return 0;
-		} break;
+		} return 0;
 
 		case WM_DESTROY: {
 			RemovePropA(hwnd, ENGINE_WINDOW_POINTER);
 			if (window->hwnd == hwnd) { ENGINE_FREE(window); }
-			return 0;
-		} break;
+		} return 0;
 	}
 
 	return DefWindowProc(hwnd, message, wParam, lParam);

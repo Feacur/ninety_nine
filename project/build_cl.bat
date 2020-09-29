@@ -41,7 +41,7 @@ cd bin
 if defined unity_build (
 	cl -std:c11 "../project/unity_build.c" -Fe"ninety_nine.exe" %compiler% -link %linker%
 ) else ( rem alternatively, compile a set of translation units
-	cl -std:c11 -c "../engine/internal/*.c" "../engine/platform_windows/*.c" "../sandbox/*.c" %compiler%
+	cl -std:c11 -c "../third_party/glad/*.c" "../engine/internal/*.c" "../engine/platform_windows/*.c" "../sandbox/*.c" %compiler%
 	link "*.obj" -out:"ninety_nine.exe" %linker%
 )
 

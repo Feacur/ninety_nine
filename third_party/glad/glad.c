@@ -24,6 +24,11 @@
 #include <string.h>
 #include "glad/glad.h"
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
 static void* get_proc(const char *namez);
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -159,7 +164,7 @@ int gladLoadGL(void) {
 struct gladGLversionStruct GLVersion = { 0, 0 };
 
 #if defined(GL_ES_VERSION_3_0) || defined(GL_VERSION_3_0)
-#define TP_GLAD_IS_SOME_NEW_VERSION 1
+#define _GLAD_IS_SOME_NEW_VERSION 1
 #endif
 
 static int max_loaded_major;
@@ -170,11 +175,11 @@ static int num_exts_i = 0;
 static char **exts_i = NULL;
 
 static int get_exts(void) {
-#ifdef TP_GLAD_IS_SOME_NEW_VERSION
+#ifdef _GLAD_IS_SOME_NEW_VERSION
     if(max_loaded_major < 3) {
 #endif
         exts = (const char *)glGetString(GL_EXTENSIONS);
-#ifdef TP_GLAD_IS_SOME_NEW_VERSION
+#ifdef _GLAD_IS_SOME_NEW_VERSION
     } else {
         unsigned int index;
 
@@ -215,7 +220,7 @@ static void free_exts(void) {
 }
 
 static int has_ext(const char *ext) {
-#ifdef TP_GLAD_IS_SOME_NEW_VERSION
+#ifdef _GLAD_IS_SOME_NEW_VERSION
     if(max_loaded_major < 3) {
 #endif
         const char *extensions;
@@ -239,7 +244,7 @@ static int has_ext(const char *ext) {
             }
             extensions = terminator;
         }
-#ifdef TP_GLAD_IS_SOME_NEW_VERSION
+#ifdef _GLAD_IS_SOME_NEW_VERSION
     } else {
         int index;
         if(exts_i == NULL) return 0;
@@ -1831,3 +1836,6 @@ int gladLoadGLLoader(GLADloadproc load) {
 	return GLVersion.major != 0 || GLVersion.minor != 0;
 }
 
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif

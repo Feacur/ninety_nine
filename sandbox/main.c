@@ -2,6 +2,7 @@
 #include "engine/api/types.h"
 #include "engine/api/dummy.h"
 #include "engine/api/platform_system.h"
+#include "engine/api/platform_time.h"
 #include "engine/api/platform_window.h"
 #include "engine/api/platform_file.h"
 
@@ -25,7 +26,7 @@ int main(int argc, char * argv[]) {
 		if (!window) { break; }
 		if (!engine_window_is_active(window)) { break; }
 		engine_system_poll_events();
-		YieldProcessor();
+		engine_time_wait();
 	}
 	if (window) { engine_window_destroy(window); }
 	engine_system_deinit();

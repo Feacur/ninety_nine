@@ -45,7 +45,7 @@ cd bin
 if defined unity_build (
 	clang -std=c99 "../project/unity_build.c" -o"ninety_nine.exe" %compiler% -Wl,%libs: =,% -Xlinker -subsystem:console
 ) else ( rem alternatively, compile a set of translation units
-	clang -std=c99 -c "../engine/internal/*.c" "../engine/platform_windows/*.c" "../sandbox/*.c" %compiler%
+	clang -std=c99 -c "../third_party/glad/*.c" "../engine/internal/*.c" "../engine/platform_windows/*.c" "../sandbox/*.c" %compiler%
 	lld-link "*.o" libcmt.lib -out:"ninety_nine.exe" %linker%
 )
 

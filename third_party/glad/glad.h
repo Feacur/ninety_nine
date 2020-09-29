@@ -19,9 +19,18 @@
         https://glad.dav1d.de/#profile=core&language=c&specification=gl&loader=on&api=gl%3D4.6
 */
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
 
-#ifndef TP_GLAD
-#define TP_GLAD
+#ifndef __glad_h_
+#define __glad_h_
+
+#ifdef __gl_h_
+#error OpenGL header already included, remove this include, glad already provides it
+#endif
+#define __gl_h_
 
 #if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
 #define APIENTRY __stdcall
@@ -3674,4 +3683,8 @@ GLAPI PFNGLPOLYGONOFFSETCLAMPPROC glad_glPolygonOffsetClamp;
 }
 #endif
 
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif
