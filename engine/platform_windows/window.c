@@ -10,7 +10,6 @@
 
 struct Engine_Window {
 	HWND hwnd;
-	bool skip_free_on_destroy;
 };
 
 struct Engine_Window * engine_window_create(void) {
@@ -18,7 +17,7 @@ struct Engine_Window * engine_window_create(void) {
 
 	window->hwnd = CreateWindowExA(
 		WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR,
-		ENGINE_WINDOW_CLASS_NAME, "",
+		ENGINE_WINDOW_CLASS_NAME, "ninety nine",
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 		// int X, Y, nWidth, nHeight
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -77,34 +76,23 @@ static void impl_toggle_borderless_fullsreen(HWND hwnd) {
 }
 */
 
-static void engine_window_clean(struct Engine_Window * window) {
-	if (window->hwnd) {
-		RemovePropA(window->hwnd, ENGINE_WINDOW_POINTER);
-		window->hwnd = NULL;
-	}
-}
-
 static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	struct Engine_Window * window = GetPropA(hwnd, ENGINE_WINDOW_POINTER);
-	if (!window) { return DefWindowProc(hwnd, message, wParam, lParam); }
+	if (!window) { return DefWindowProcA(hwnd, message, wParam, lParam); }
 
 	switch (message) {
 		case WM_CLOSE: {
 			// if (window->callbacks.close) {
 			// 	(*window->callbacks.close)(window);
 			// }
-			// else {
-				window->skip_free_on_destroy = true;
-				DestroyWindow(hwnd);
-			// }
+			window->hwnd = NULL;
+			DestroyWindow(hwnd);
 			return 0;
 		} break;
 
 		case WM_DESTROY: {
-			engine_window_clean(window);
-			if (!window->skip_free_on_destroy) {
-				ENGINE_FREE(window);
-			}
+			RemovePropA(hwnd, ENGINE_WINDOW_POINTER);
+			if (window->hwnd == hwnd) { ENGINE_FREE(window); }
 			return 0;
 		} break;
 	}
@@ -113,14 +101,14 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 }
 
 void engine_window_internal_register_class(void) {
-	WNDCLASSEXA window_class;
-	memset(&window_class, 0, sizeof(window_class));
-	window_class.cbSize        = sizeof(window_class);
-	window_class.style         = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
-	window_class.lpfnWndProc   = impl_window_procedure;
-	window_class.hCursor       = LoadCursorA(0, IDC_ARROW);
-	window_class.lpszClassName = ENGINE_WINDOW_CLASS_NAME;
-	RegisterClassExA(&window_class);
+	RegisterClassExA(&(WNDCLASSEXA){
+		.cbSize        = sizeof(WNDCLASSEXA),
+		.lpszClassName = ENGINE_WINDOW_CLASS_NAME,
+		.hInstance     = GetModuleHandleA(NULL),
+		.lpfnWndProc   = impl_window_procedure,
+		.style         = CS_OWNDC | CS_HREDRAW | CS_VREDRAW,
+		.hCursor       = LoadCursorA(0, IDC_ARROW),
+	});
 }
 
 void engine_window_internal_unregister_class(void) {
