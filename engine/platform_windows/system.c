@@ -1,5 +1,6 @@
 #include "engine/api/code.h"
 #include "engine/api/system.h"
+#include "window_internal.h"
 
 #include <signal.h>
 #include <Windows.h>
@@ -8,13 +9,18 @@ bool engine_system_should_close;
 
 static void signal_handler(int value);
 void engine_system_init(void) {
-	
+	engine_window_internal_register_class();
+
 	signal(SIGABRT, signal_handler);
 	signal(SIGFPE,  signal_handler);
 	signal(SIGILL,  signal_handler);
 	signal(SIGINT,  signal_handler);
 	signal(SIGSEGV, signal_handler);
 	signal(SIGTERM, signal_handler);
+}
+
+void engine_system_deinit(void) {
+	engine_window_internal_unregister_class();
 }
 
 void engine_system_poll_events(void) {
