@@ -1,7 +1,12 @@
 #include "engine/api/code.h"
-#include "engine/api/file.h"
 
 #include <Windows.h>
+
+//
+// API
+//
+
+#include "engine/api/file.h"
 
 u64 engine_file_time(cstring path) {
 	WIN32_FIND_DATA find_file_data;
@@ -11,9 +16,10 @@ u64 engine_file_time(cstring path) {
 		return 0;
 	}
 
-	ULARGE_INTEGER large;
-	large.LowPart  = find_file_data.ftLastWriteTime.dwLowDateTime;
-	large.HighPart = find_file_data.ftLastWriteTime.dwHighDateTime;
+	ULARGE_INTEGER large = {
+		.LowPart  = find_file_data.ftLastWriteTime.dwLowDateTime,
+		.HighPart = find_file_data.ftLastWriteTime.dwHighDateTime,
+	};
 
 	FindClose(handle);
 	return large.QuadPart ? (u64)large.QuadPart : 1;

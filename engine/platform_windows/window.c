@@ -1,12 +1,19 @@
 #include "engine/api/code.h"
 #include "engine/api/types.h"
-#include "engine/api/window.h"
-#include "window_internal.h"
 
 #include <Windows.h>
 
+//
 #define ENGINE_WINDOW_CLASS_NAME "engine_window_class_name"
 #define ENGINE_WINDOW_POINTER "engine_window_pointer"
+
+static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+//
+// API
+//
+
+#include "engine/api/window.h"
 
 struct Engine_Window {
 	HWND hwnd;
@@ -38,7 +45,28 @@ bool engine_window_is_active(struct Engine_Window * window) {
 }
 
 //
+// internal API
 //
+
+#include "window_internal.h"
+
+void engine_window_internal_register_class(void) {
+	RegisterClassExA(&(WNDCLASSEXA){
+		.cbSize        = sizeof(WNDCLASSEXA),
+		.lpszClassName = ENGINE_WINDOW_CLASS_NAME,
+		.hInstance     = GetModuleHandleA(NULL),
+		.lpfnWndProc   = impl_window_procedure,
+		.style         = CS_OWNDC | CS_HREDRAW | CS_VREDRAW,
+		.hCursor       = LoadCursorA(0, IDC_ARROW),
+	});
+}
+
+void engine_window_internal_unregister_class(void) {
+	UnregisterClassA(ENGINE_WINDOW_CLASS_NAME, GetModuleHandleA(NULL));
+}
+
+//
+// internal implementation
 //
 
 /*
@@ -100,17 +128,6 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 	return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
-void engine_window_internal_register_class(void) {
-	RegisterClassExA(&(WNDCLASSEXA){
-		.cbSize        = sizeof(WNDCLASSEXA),
-		.lpszClassName = ENGINE_WINDOW_CLASS_NAME,
-		.hInstance     = GetModuleHandleA(NULL),
-		.lpfnWndProc   = impl_window_procedure,
-		.style         = CS_OWNDC | CS_HREDRAW | CS_VREDRAW,
-		.hCursor       = LoadCursorA(0, IDC_ARROW),
-	});
-}
-
-void engine_window_internal_unregister_class(void) {
-	UnregisterClassA(ENGINE_WINDOW_CLASS_NAME, GetModuleHandleA(NULL));
-}
+//
+#undef ENGINE_WINDOW_CLASS_NAME
+#undef ENGINE_WINDOW_POINTER
