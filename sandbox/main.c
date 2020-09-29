@@ -1,9 +1,9 @@
 #include "engine/api/code.h"
 #include "engine/api/types.h"
-#include "engine/api/system.h"
-#include "engine/api/window.h"
-#include "engine/api/file.h"
 #include "engine/api/dummy.h"
+#include "engine/api/platform_system.h"
+#include "engine/api/platform_window.h"
+#include "engine/api/platform_file.h"
 
 int main(int argc, char * argv[]) {
 	(void)argc; (void)argv;

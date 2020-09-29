@@ -12,7 +12,7 @@ static void impl_signal_handler(int value);
 // API
 //
 
-#include "engine/api/system.h"
+#include "engine/api/platform_system.h"
 
 bool engine_system_should_close;
 

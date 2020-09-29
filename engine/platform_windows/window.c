@@ -14,7 +14,7 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 // API
 //
 
-#include "engine/api/window.h"
+#include "engine/api/platform_window.h"
 
 struct Engine_Window {
 	HWND hwnd;
