@@ -1,5 +1,5 @@
 #include "engine/api/code.h"
-#include "engine/api/types.h"
+#include "engine/api/math_types.h"
 #include "ogl_context.h"
 
 #include <Windows.h>
@@ -9,6 +9,7 @@
 #define ENGINE_WINDOW_POINTER "engine_window_pointer"
 
 static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+static void impl_toggle_borderless_fullsreen(HWND hwnd);
 
 //
 // API
@@ -18,6 +19,7 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 
 struct Engine_Window {
 	HWND hwnd;
+	svec2 size;
 	struct Rendering_Context_OGL * rendering_context;
 };
 
@@ -48,6 +50,10 @@ bool engine_window_is_active(struct Engine_Window * window) {
 
 void engine_window_init_context(struct Engine_Window * window) {
 	window->rendering_context = engine_ogl_context_create(window);
+}
+
+void engine_window_toggle_borderless_fullsreen(struct Engine_Window * window) {
+	impl_toggle_borderless_fullsreen(window->hwnd);
 }
 
 //
@@ -85,20 +91,32 @@ HDC engine_window_get_hdc(struct Engine_Window * window) {
 // internal implementation
 //
 
-/*
+static void impl_process_message_raw(struct Engine_Window * window, WPARAM wParam, LPARAM lParam) {
+	(void)window; (void)wParam; (void)lParam;
+	// https://docs.microsoft.com/en-us/windows/win32/inputdev/raw-input
+}
+
+static void impl_process_message_keyboard(struct Engine_Window * window, WPARAM wParam, LPARAM lParam) {
+	(void)window; (void)wParam; (void)lParam;
+	// https://docs.microsoft.com/en-us/windows/win32/inputdev/keyboard-input
+}
+
+static void impl_process_message_mouse(struct Engine_Window * window, WPARAM wParam, LPARAM lParam, bool client_space, svec2 scale) {
+	(void)window; (void)wParam; (void)lParam; (void)client_space; (void)scale;
+	// https://docs.microsoft.com/en-us/windows/win32/inputdev/mouse-input
+}
+
 static void impl_toggle_borderless_fullsreen(HWND hwnd) {
-	static WINDOWPLACEMENT normal_window_position;
+	static WINDOWPLACEMENT window_placement;
 	
-	DWORD window_style = GetWindowLong(hwnd, GWL_STYLE);
+	LONG window_style = GetWindowLongA(hwnd, GWL_STYLE);
 	if ((window_style & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
-		if (!GetWindowPlacement(hwnd, &normal_window_position)) { return; }
+		if (!GetWindowPlacement(hwnd, &window_placement)) { return; }
 
-		MONITORINFO monitor_info;
-		memset(&monitor_info, 0, sizeof(monitor_info));
-		monitor_info.cbSize = sizeof(MONITORINFO);
-		if (!GetMonitorInfo(MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY), &monitor_info)) { return; }
+		MONITORINFO monitor_info = {.cbSize = sizeof(monitor_info)};
+		if (!GetMonitorInfoA(MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY), &monitor_info)) { return; }
 
-		SetWindowLong(hwnd, GWL_STYLE, window_style & ~WS_OVERLAPPEDWINDOW);
+		SetWindowLongA(hwnd, GWL_STYLE, window_style & ~WS_OVERLAPPEDWINDOW);
 		SetWindowPos(
 			hwnd, HWND_TOP,
 			monitor_info.rcMonitor.left, monitor_info.rcMonitor.top,
@@ -109,22 +127,65 @@ static void impl_toggle_borderless_fullsreen(HWND hwnd) {
 		return;
 	}
 
-	// Restore windowed mode
-	SetWindowLong(hwnd, GWL_STYLE, window_style | WS_OVERLAPPEDWINDOW);
-	SetWindowPlacement(hwnd, &normal_window_position);
+	SetWindowLongA(hwnd, GWL_STYLE, window_style | WS_OVERLAPPEDWINDOW);
+	SetWindowPlacement(hwnd, &window_placement);
 	SetWindowPos(
 		hwnd, 0,
 		0, 0, 0, 0,
 		SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED
 	);
 }
-*/
 
 static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	struct Engine_Window * window = GetPropA(hwnd, ENGINE_WINDOW_POINTER);
 	if (!window) { return DefWindowProcA(hwnd, message, wParam, lParam); }
 
 	switch (message) {
+		case WM_INPUT: {
+			impl_process_message_raw(window, wParam, lParam);
+		} return 0;
+
+		case WM_SYSKEYUP:
+		case WM_SYSKEYDOWN:
+		case WM_KEYUP:
+		case WM_KEYDOWN: {
+			impl_process_message_keyboard(window, wParam, lParam);
+		} return 0;
+
+		case WM_MOUSEMOVE:
+		case WM_LBUTTONDOWN:
+		case WM_LBUTTONUP:
+		case WM_MBUTTONDOWN:
+		case WM_MBUTTONUP:
+		case WM_RBUTTONDOWN:
+		case WM_RBUTTONUP:
+		case WM_XBUTTONDOWN:
+		case WM_XBUTTONUP: {
+			impl_process_message_mouse(window, wParam, lParam, true, (svec2){0, 0});
+		} return 0;
+
+		case WM_MOUSEWHEEL: {
+			impl_process_message_mouse(window, wParam, lParam, false, (svec2){0, 1});
+		} return 0;
+		
+		case WM_MOUSEHWHEEL: {
+			impl_process_message_mouse(window, wParam, lParam, false, (svec2){1, 0});
+		} return 0;
+
+		case WM_KILLFOCUS: {
+			// keyboard_reset(window);
+			// mouse_reset(window);
+		} return 0;
+
+		case WM_SIZE: {
+			window->size = (svec2){LOWORD(lParam), HIWORD(lParam)};
+			switch (wParam) {
+				case SIZE_MINIMIZED: break;
+				case SIZE_MAXIMIZED: break;
+				case SIZE_RESTORED:  break;
+			}
+		} return 0;
+
 		case WM_CLOSE: {
 			// if (window->callbacks.close) {
 			// 	(*window->callbacks.close)(window);
@@ -135,6 +196,7 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 
 		case WM_DESTROY: {
 			RemovePropA(hwnd, ENGINE_WINDOW_POINTER);
+			if (window->rendering_context) { engine_ogl_context_destroy(window->rendering_context); }
 			if (window->hwnd == hwnd) { ENGINE_FREE(window); }
 		} return 0;
 	}
