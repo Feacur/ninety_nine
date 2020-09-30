@@ -43,15 +43,18 @@ cd ..
 if not exist bin mkdir bin
 cd bin
 
+if not exist temp mkdir temp
+
 if defined unity_build (
 	clang -std=c99 "../project/unity_build.c" -o"ninety_nine.exe" %compiler% %warnings% -Wl,%libs: =,% -Xlinker -subsystem:console
 ) else ( rem alternatively, compile a set of translation units
-	if exist "unity_build*.o" del "unity_build*.o"
+	if exist "./temp/unity_build*" del ".\temp\unity_build*"
 	clang -std=c99 -c "../engine/internal/*.c"         %compiler% %warnings%
 	clang -std=c99 -c "../engine/platform_windows/*.c" %compiler% %warnings%
 	clang -std=c99 -c "../sandbox/*.c"                 %compiler% %warnings%
 	clang -std=c99 -c "../third_party/glad/*.c"        %compiler%
-	lld-link "*.o" libcmt.lib -out:"ninety_nine.exe" %linker%
+	move ".\*.o" ".\temp"
+	lld-link "./temp/*.o" libcmt.lib -out:"ninety_nine.exe" %linker%
 )
 
 cd ../project
