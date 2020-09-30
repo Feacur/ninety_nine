@@ -19,11 +19,6 @@
         https://glad.dav1d.de/#profile=core&language=c&specification=gl&loader=on&api=gl%3D4.6
 */
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wreserved-id-macro"
-#endif
-
 #ifndef __glad_h_
 #define __glad_h_
 
@@ -3683,8 +3678,4 @@ GLAPI PFNGLPOLYGONOFFSETCLAMPPROC glad_glPolygonOffsetClamp;
 }
 #endif
 
-#endif
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
 #endif

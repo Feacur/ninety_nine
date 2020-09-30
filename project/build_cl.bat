@@ -21,7 +21,8 @@ rem > OPTIONS
 set includes=-I".." -I"../third_party"
 set defines=-D_CRT_SECURE_NO_WARNINGS -DWIN32_LEAN_AND_MEAN -DNOMINMAX
 set libs=user32.lib
-set compiler=-nologo -diagnostics:caret -WX -W4 -EHa- -GR- %includes% %defines%
+set warnings=-WX -W4
+set compiler=-nologo -diagnostics:caret -EHa- -GR- %includes% %defines%
 set linker=-nologo -WX -subsystem:console %libs%
 
 if defined debug (
@@ -39,9 +40,13 @@ if not exist bin mkdir bin
 cd bin
 
 if defined unity_build (
-	cl -std:c11 "../project/unity_build.c" -Fe"ninety_nine.exe" %compiler% -link %linker%
+	cl -std:c11 "../project/unity_build.c" -Fe"ninety_nine.exe" %compiler% %warnings% -link %linker%
 ) else ( rem alternatively, compile a set of translation units
-	cl -std:c11 -c "../third_party/glad/*.c" "../engine/internal/*.c" "../engine/platform_windows/*.c" "../sandbox/*.c" %compiler%
+	if exist "unity_build*.obj" del "unity_build*.obj"
+	cl -std:c11 -c "../engine/internal/*.c"         %compiler% %warnings%
+	cl -std:c11 -c "../engine/platform_windows/*.c" %compiler% %warnings%
+	cl -std:c11 -c "../sandbox/*.c"                 %compiler% %warnings%
+	cl -std:c11 -c "../third_party/glad/*.c"        %compiler%
 	link "*.obj" -out:"ninety_nine.exe" %linker%
 )
 

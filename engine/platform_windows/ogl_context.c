@@ -4,8 +4,18 @@
 #include "window_context.h"
 
 #include <Windows.h>
-#include "glad/glad.h"
 #include "ogl_wgl_tiny.h"
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+
+#include "glad/glad.h"
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 //
 #define ENGINE_OPENGL_LIBRARY_NAME "opengl32.dll"
