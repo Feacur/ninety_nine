@@ -9,7 +9,7 @@ rem https://clang.llvm.org/docs/CommandGuide/clang.html
 rem https://clang.llvm.org/docs/UsersManual.html
 rem https://clang.llvm.org/docs/ClangCommandLineReference.html
 rem https://lld.llvm.org/windows_support.html
-rem https://docs.microsoft.com/en-us/cpp/build/reference/linker-options
+rem https://docs.microsoft.com/cpp/build/reference/linker-options
 
 rem > PREPARE TOOLS
 set "PATH=%PATH%;C:/Program Files/LLVM/bin"
@@ -53,6 +53,7 @@ if defined unity_build (
 	clang -std=c99 -c "../engine/platform_windows/*.c" %compiler% %warnings%
 	clang -std=c99 -c "../sandbox/*.c"                 %compiler% %warnings%
 	clang -std=c99 -c "../third_party/glad/*.c"        %compiler%
+	rem clang -std=c99 -c "../third_party/stb/*.c"         %compiler%
 	move ".\*.o" ".\temp"
 	lld-link "./temp/*.o" libcmt.lib -out:"ninety_nine.exe" %linker%
 )

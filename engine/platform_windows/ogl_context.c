@@ -21,7 +21,7 @@
 #define ENGINE_OPENGL_LIBRARY_NAME "opengl32.dll"
 
 struct Opengl_Library {
-	HINSTANCE instance;
+	HMODULE library;
 };
 static struct Opengl_Library * opengl;
 
@@ -55,12 +55,12 @@ void engine_ogl_context_destroy(struct Rendering_Context_OGL * context) {
 
 void engine_system_init_opengl(void) {
 	opengl = ENGINE_MALLOC(sizeof(*opengl));
-	opengl->instance = LoadLibraryA(ENGINE_OPENGL_LIBRARY_NAME);
+	opengl->library = LoadLibraryA(ENGINE_OPENGL_LIBRARY_NAME);
 
 }
 
 void engine_system_deinit_opengl(void) {
-	FreeLibrary(opengl->instance);
+	FreeLibrary(opengl->library);
 	ENGINE_FREE(opengl);
 }
 

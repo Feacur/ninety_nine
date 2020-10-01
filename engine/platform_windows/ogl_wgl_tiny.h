@@ -18,7 +18,7 @@
 // Normally, many buffer memory access operations that access data outside of the bound range of storage have undefined results (potentially including program termination). However, if the program doesn't crash, this can lead to being able to read values that were written by other applications, which is a security concern.
 // Robust access means that out-of-bounds reads will provide well-defined results (usually zero). And such accesses will never cause program termination. It provides better process isolation.
 
-// https://docs.microsoft.com/en-us/windows/win32/api/wingdi/
+// https://docs.microsoft.com/windows/win32/api/wingdi/
 typedef HGLRC (WINAPI CreateContext_func)(HDC hDc);
 typedef BOOL  (WINAPI DeleteContext_func)(HGLRC oldContext);
 typedef PROC  (WINAPI GetProcAddress_func)(LPCSTR lpszProc);

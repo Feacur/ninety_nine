@@ -2,10 +2,12 @@
 #include "window_system.h"
 #include "ogl_system.h"
 
-#include <signal.h>
 #include <Windows.h>
+#include <signal.h>
+#include <ShellScalingApi.h>
 
 //
+static void impl_set_process_dpi_awareness(void);
 static void impl_signal_handler(int value);
 
 //
@@ -17,6 +19,7 @@ static void impl_signal_handler(int value);
 bool engine_system_should_close;
 
 void engine_system_init(void) {
+	impl_set_process_dpi_awareness();
 	engine_system_register_window_class();
 	engine_system_init_opengl();
 
@@ -43,8 +46,63 @@ void engine_system_poll_events(void) {
 }
 
 //
+// API internal
+//
+
+#include "system_internal.h"
+
+void engine_system_internal_log_last_error(void) {
+	DWORD const error = GetLastError();
+	if (!error) { return; }
+
+	LPTSTR buffer = NULL;
+	FormatMessageA(
+		FORMAT_MESSAGE_FROM_SYSTEM
+		| FORMAT_MESSAGE_ALLOCATE_BUFFER
+		| FORMAT_MESSAGE_IGNORE_INSERTS
+		| FORMAT_MESSAGE_MAX_WIDTH_MASK,
+		NULL, error,
+		MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
+		(LPTSTR)&buffer, 0,
+		NULL
+	);
+
+	printf("'0x%lx': %s\n", error, buffer ? buffer : "unknown");
+	if (buffer) { LocalFree(buffer); }
+}
+
+//
 // internal implementation
 //
+
+static void impl_set_process_dpi_awareness(void) {
+	// https://docs.microsoft.com/windows/win32/hidpi/setting-the-default-dpi-awareness-for-a-process
+	HMODULE User32_dll = LoadLibraryA("User32.dll");
+	if (!User32_dll) { return; }
+
+	bool done = false;
+
+	if (!done) { // Windows 10, version 1703
+		BOOL (WINAPI * _SetProcessDpiAwarenessContext)(DPI_AWARENESS_CONTEXT) = (BOOL (WINAPI *)(DPI_AWARENESS_CONTEXT value))GetProcAddress(User32_dll, "SetProcessDpiAwarenessContext");
+		if (_SetProcessDpiAwarenessContext) { _SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); done = true; }
+	}
+
+	if (!done) { // Windows 8.1
+		HMODULE Shcore_dll = LoadLibraryA("Shcore.dll");
+		if (Shcore_dll) {
+			BOOL (WINAPI * _SetProcessDpiAwareness)(PROCESS_DPI_AWARENESS) = (BOOL (WINAPI *)(PROCESS_DPI_AWARENESS))GetProcAddress(Shcore_dll, "SetProcessDpiAwareness");
+			if (_SetProcessDpiAwareness) { _SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE); done = true; }
+			FreeLibrary(Shcore_dll);
+		}
+	}
+
+	if (!done) { // Windows Vista
+		BOOL (WINAPI * _SetProcessDPIAware)(VOID) = (BOOL (WINAPI *)(VOID))GetProcAddress(User32_dll, "SetProcessDPIAware");
+		if (_SetProcessDPIAware) { _SetProcessDPIAware(); done = true; }
+	}
+
+	FreeLibrary(User32_dll);
+}
 
 static void impl_signal_handler(int value) {
 	// http://www.cplusplus.com/reference/csignal/signal/
@@ -60,11 +118,11 @@ static void impl_signal_handler(int value) {
 	engine_system_should_close = true;
 }
 
-// https://docs.microsoft.com/en-us/cpp/c-runtime-library/argc-argv-wargv
-// https://docs.microsoft.com/en-us/windows/win32/desktop-programming
-// https://docs.microsoft.com/en-us/windows/win32/dlls/dllmain
-// https://docs.microsoft.com/en-us/windows/win32/learnwin32/winmain--the-application-entry-point
-// https://docs.microsoft.com/en-us/cpp/build/reference/subsystem-specify-subsystem
+// https://docs.microsoft.com/cpp/c-runtime-library/argc-argv-wargv
+// https://docs.microsoft.com/windows/win32/desktop-programming
+// https://docs.microsoft.com/windows/win32/dlls/dllmain
+// https://docs.microsoft.com/windows/win32/learnwin32/winmain--the-application-entry-point
+// https://docs.microsoft.com/cpp/build/reference/subsystem-specify-subsystem
 
 extern int main(int argc, char * argv[]);
 int WINAPI WinMain(

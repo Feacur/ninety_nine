@@ -4,8 +4,8 @@ chcp 65001
 set debug=dummy
 set unity_build=dummy
 
-rem https://docs.microsoft.com/en-us/cpp/build/reference/compiler-options
-rem https://docs.microsoft.com/en-us/cpp/build/reference/linker-options
+rem https://docs.microsoft.com/cpp/build/reference/compiler-options
+rem https://docs.microsoft.com/cpp/build/reference/linker-options
 
 rem > PREPARE TOOLS
 rem set "PATH=%PATH%;C:/Program Files/LLVM/bin"
@@ -49,6 +49,7 @@ if defined unity_build (
 	cl -std:c11 -c "../engine/platform_windows/*.c" %compiler% %warnings%
 	cl -std:c11 -c "../sandbox/*.c"                 %compiler% %warnings%
 	cl -std:c11 -c "../third_party/glad/*.c"        %compiler%
+	rem cl -std:c11 -c "../third_party/stb/*.c"         %compiler%
 	link "./temp/*.obj" -out:"ninety_nine.exe" %linker%
 )
 
