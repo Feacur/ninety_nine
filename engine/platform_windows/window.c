@@ -1,5 +1,6 @@
 #include "engine/api/code.h"
 #include "engine/api/math_types.h"
+#include "engine/api/key_codes.h"
 #include "ogl_context.h"
 
 #include <Windows.h>
@@ -26,7 +27,14 @@ struct Engine_Window {
 		svec2 delta;
 		svec2 display_position;
 		svec2 window_position;
+		vec2  wheel;
+		bool  keys[8];
+		bool  prev[8];
 	} mouse;
+	struct {
+		bool keys[256];
+		bool prev[256];
+	} keyboard;
 	struct Rendering_Context_OGL * rendering_context;
 };
 
@@ -63,7 +71,54 @@ void engine_window_init_context(struct Engine_Window * window) {
 	window->rendering_context = engine_ogl_context_create(window);
 }
 
+static void engine_window_reset_input(struct Engine_Window * window) {
+	memcpy(window->mouse.prev,    window->mouse.keys,    sizeof(window->mouse.keys));
+	memcpy(window->keyboard.prev, window->keyboard.keys, sizeof(window->keyboard.keys));
+	window->mouse.delta = (svec2){0, 0};
+	window->mouse.wheel = (vec2){0, 0};
+}
+
+void engine_window_update(struct Engine_Window * window) {
+	engine_window_reset_input(window);
+}
+
+svec2 engine_window_mouse_delta(struct Engine_Window * window) {
+	return window->mouse.delta;
+}
+
+svec2 engine_window_mouse_display_position(struct Engine_Window * window) {
+	return window->mouse.display_position;
+}
+
+svec2 engine_window_mouse_window_position(struct Engine_Window * window) {
+	return window->mouse.window_position;
+}
+
+bool engine_window_mouse_button(struct Engine_Window * window, u8 key) {
+	if (key >= sizeof(window->mouse.keys)) { return false; }
+	return window->mouse.keys[key];
+}
+
+bool engine_window_mouse_transition(struct Engine_Window * window, u8 key, bool state) {
+	if (key >= sizeof(window->mouse.keys)) { return false; }
+	bool now  = window->mouse.keys[key];
+	bool prev = window->mouse.prev[key];
+	return (now != prev) && (now == state);
+}
+
+bool engine_window_key(struct Engine_Window * window, u8 key) {
+	return window->keyboard.keys[key];
+}
+
+bool engine_window_key_transition(struct Engine_Window * window, u8 key, bool state) {
+	bool now  = window->keyboard.keys[key];
+	bool prev = window->keyboard.prev[key];
+	return (now != prev) && (now == state);
+}
+
 void engine_window_toggle_raw_input(struct Engine_Window * window) {
+	engine_window_reset_input(window);
+
 	// https://docs.microsoft.com/windows-hardware/drivers/hid/hid-usages
 	HWND hwnd_target; USHORT flags;
 	if (!impl_window_raw_input_target) {
@@ -155,6 +210,28 @@ static s32 mul_div(s32 value, s32 numerator, s32 denominator) {
 	return a * numerator + b * numerator / denominator;
 }
 
+static void impl_keyboard_process_virtual_key(struct Engine_Window * window, USHORT key, bool is_down) {
+	if ('A'   <= key && key <= 'Z')    { window->keyboard.keys[KC_A  + key - 'A']   = is_down; return; }
+	if ('0'   <= key && key <= '9')    { window->keyboard.keys[KC_D0 + key - '0']   = is_down; return; }
+	if (VK_F1 <= key && key <= VK_F24) { window->keyboard.keys[KC_F1 + key - VK_F1] = is_down; return; }
+	//
+	switch (key) {
+		case VK_LEFT:  window->keyboard.keys[KC_Left]  = is_down; break;
+		case VK_RIGHT: window->keyboard.keys[KC_Right] = is_down; break;
+		case VK_DOWN:  window->keyboard.keys[KC_Down]  = is_down; break;
+		case VK_UP:    window->keyboard.keys[KC_Up]    = is_down; break;
+		//
+		case VK_TAB:     window->keyboard.keys[KC_Tab]       = is_down; break;
+		case VK_SHIFT:   window->keyboard.keys[KC_Shift]     = is_down; break;
+		case VK_CONTROL: window->keyboard.keys[KC_Control]   = is_down; break;
+		case VK_MENU:    window->keyboard.keys[KC_Alt]       = is_down; break;
+		case VK_SPACE:   window->keyboard.keys[KC_Space]     = is_down; break;
+		case VK_RETURN:  window->keyboard.keys[KC_Enter]     = is_down; break;
+		case VK_BACK:    window->keyboard.keys[KC_Backspace] = is_down; break;
+		case VK_DELETE:  window->keyboard.keys[KC_Del]       = is_down; break;
+	}
+}
+
 static void raw_input_callback_mouse(struct Engine_Window * window, RAWMOUSE * data) {
 	// https://docs.microsoft.com/windows/win32/api/winuser/ns-winuser-rawmouse
 	bool const is_virtual_desktop = (data->usFlags & MOUSE_VIRTUAL_DESKTOP) == MOUSE_VIRTUAL_DESKTOP;
@@ -169,41 +246,79 @@ static void raw_input_callback_mouse(struct Engine_Window * window, RAWMOUSE * d
 			.y = mul_div(data->lLastY, height, UINT16_MAX),
 		};
 		window->mouse.display_position = (svec2){position.x, position.y};
+		window->mouse.display_position.y = height - (window->mouse.display_position.y + 1);
 	
 		ScreenToClient(window->hwnd, &position);
 		window->mouse.window_position = (svec2){position.x, position.y};
+		window->mouse.window_position.y = window->size.y - (window->mouse.window_position.y + 1);
 
-		window->mouse.delta = (svec2){
+		svec2 delta = (svec2){
 			window->mouse.display_position.x - previous_display_position.x,
 			window->mouse.display_position.y - previous_display_position.y,
 		};
+		window->mouse.delta.x += delta.x;
+		window->mouse.delta.y += delta.y;
 	}
-	else {
+	else if (data->lLastX != 0 || data->lLastY != 0) {
 		POINT position;
 		GetCursorPos(&position);
 		window->mouse.display_position = (svec2){position.x, position.y};
+		window->mouse.display_position.y = height - (window->mouse.display_position.y + 1);
 
 		ScreenToClient(window->hwnd, &position);
 		window->mouse.window_position = (svec2){position.x, position.y};
+		window->mouse.window_position.y  = window->size.y - (window->mouse.window_position.y + 1);
 
-		window->mouse.delta = (svec2){data->lLastX, data->lLastY};
+		svec2 delta = (svec2){data->lLastX, -data->lLastY};
+		window->mouse.delta.x += delta.x;
+		window->mouse.delta.y += delta.y;
 	}
 
-	window->mouse.display_position.y = height - (window->mouse.display_position.y + 1);
-	window->mouse.window_position.y  = window->size.y - (window->mouse.window_position.y + 1);
-	window->mouse.delta.y            = -window->mouse.delta.y;
+	//
+	if ((data->usButtonFlags & RI_MOUSE_HWHEEL) == RI_MOUSE_HWHEEL) {
+		window->mouse.wheel.x += (r32)(short)data->usButtonData / WHEEL_DELTA;
+	}
+
+	if ((data->usButtonFlags & RI_MOUSE_WHEEL) == RI_MOUSE_WHEEL) {
+		window->mouse.wheel.y += (r32)(short)data->usButtonData / WHEEL_DELTA;
+	}
+
+	//
+	static u32 const keys_down[sizeof(window->mouse.keys)] = {
+		RI_MOUSE_BUTTON_1_DOWN,
+		RI_MOUSE_BUTTON_2_DOWN,
+		RI_MOUSE_BUTTON_3_DOWN,
+		RI_MOUSE_BUTTON_4_DOWN,
+		RI_MOUSE_BUTTON_5_DOWN,
+	};
+
+	static u32 const keys_up[sizeof(window->mouse.keys)] = {
+		RI_MOUSE_BUTTON_1_UP,
+		RI_MOUSE_BUTTON_2_UP,
+		RI_MOUSE_BUTTON_3_UP,
+		RI_MOUSE_BUTTON_4_UP,
+		RI_MOUSE_BUTTON_5_UP,
+	};
+
+	for (u8 i = 0; i < sizeof(window->mouse.keys); ++i) {
+		bool is_down = (data->usButtonFlags & keys_down[i]) == keys_down[i];
+		bool is_up   = (data->usButtonFlags & keys_up[i])   == keys_up[i];
+		window->mouse.keys[i] = is_down && !is_up;
+	}
 }
 
 static void raw_input_callback_keyboard(struct Engine_Window * window, RAWKEYBOARD * data) {
 	// https://docs.microsoft.com/windows/win32/api/winuser/ns-winuser-rawkeyboard
 	(void)window; (void)data;
-	
+	bool is_up = (data->Flags & RI_KEY_BREAK) == RI_KEY_BREAK;
+	impl_keyboard_process_virtual_key(window, data->VKey, !is_up);
 }
 
 static void raw_input_callback_hid(struct Engine_Window * window, RAWHID * data) {
 	// https://docs.microsoft.com/windows/win32/api/winuser/ns-winuser-rawhid
 	(void)window; (void)data;
-	
+	printf("not implemented `raw_input_callback_hid`");
+	ENGINE_DEBUG_BREAK();
 }
 
 static void impl_process_message_raw(struct Engine_Window * window, WPARAM wParam, LPARAM lParam) {
@@ -233,16 +348,68 @@ static void impl_process_message_raw(struct Engine_Window * window, WPARAM wPara
 	}
 }
 
-static void impl_process_message_mouse(struct Engine_Window * window, WPARAM wParam, LPARAM lParam, bool client_space, svec2 scale) {
+static void impl_process_message_mouse(struct Engine_Window * window, WPARAM wParam, LPARAM lParam, bool client_space, vec2 wheel_mask) {
 	// https://docs.microsoft.com/windows/win32/inputdev/mouse-input
-	(void)wParam; (void)lParam; (void)client_space; (void)scale;
 	if (impl_window_raw_input_target == window->hwnd) { return; }
+
+	int const height = GetSystemMetrics(SM_CYSCREEN);
+
+	POINTS points = MAKEPOINTS(lParam);
+	POINT client, screen;
+	if (client_space) {
+		client = (POINT){.x = points.x, .y = points.y};
+		screen = client;
+		ClientToScreen(window->hwnd, &screen);
+	}
+	else {
+		screen = (POINT){.x = points.x, .y = points.y};
+		client = screen;
+		ScreenToClient(window->hwnd, &client);
+	}
+
+	svec2 const previous_display_position = window->mouse.display_position;
+
+	window->mouse.display_position = (svec2){screen.x, screen.y};
+	window->mouse.display_position.y = height - (window->mouse.display_position.y + 1);
+
+	window->mouse.window_position = (svec2){client.x, client.y};
+	window->mouse.window_position.y = window->size.y - (window->mouse.window_position.y + 1);
+
+	svec2 delta = (svec2){
+		window->mouse.display_position.x - previous_display_position.x,
+		window->mouse.display_position.y - previous_display_position.y,
+	};
+	window->mouse.delta.x += delta.x;
+	window->mouse.delta.y += delta.y;
+
+	//
+	window->mouse.wheel.x += wheel_mask.x * (GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
+	window->mouse.wheel.y += wheel_mask.y * (GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
+
+	//
+	static u32 const keys_down[sizeof(window->mouse.keys)] = {
+		MK_LBUTTON,
+		MK_MBUTTON,
+		MK_RBUTTON,
+		MK_XBUTTON1,
+		MK_XBUTTON2,
+	};
+
+	WPARAM virtual_keys = wParam;
+	for (u8 i = 0; i < sizeof(window->mouse.keys); ++i) {
+		bool is_down = (virtual_keys & keys_down[i]) == keys_down[i];
+		window->mouse.keys[i] = is_down;
+	}
 }
 
 static void impl_process_message_keyboard(struct Engine_Window * window, WPARAM wParam, LPARAM lParam) {
 	// https://docs.microsoft.com/windows/win32/inputdev/keyboard-input
 	(void)wParam; (void)lParam;
 	if (impl_window_raw_input_target == window->hwnd) { return; }
+
+	WORD flag = HIWORD(lParam);
+	bool is_up = (flag & KF_UP) == KF_UP;
+	impl_keyboard_process_virtual_key(window, (USHORT)wParam, !is_up);
 }
 
 static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -263,15 +430,15 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 		case WM_RBUTTONUP:
 		case WM_XBUTTONDOWN:
 		case WM_XBUTTONUP: {
-			impl_process_message_mouse(window, wParam, lParam, true, (svec2){0, 0});
+			impl_process_message_mouse(window, wParam, lParam, true, (vec2){0, 0});
 		} return 0;
 
 		case WM_MOUSEWHEEL: {
-			impl_process_message_mouse(window, wParam, lParam, false, (svec2){0, 1});
+			impl_process_message_mouse(window, wParam, lParam, false, (vec2){0, 1});
 		} return 0;
 		
 		case WM_MOUSEHWHEEL: {
-			impl_process_message_mouse(window, wParam, lParam, false, (svec2){1, 0});
+			impl_process_message_mouse(window, wParam, lParam, false, (vec2){1, 0});
 		} return 0;
 
 		case WM_SYSKEYUP:
@@ -282,8 +449,8 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 		} return 0;
 
 		case WM_KILLFOCUS: {
-			// keyboard_reset(window);
-			// mouse_reset(window);
+			memset(window->mouse.keys,    0, sizeof(window->mouse.keys));
+			memset(window->keyboard.keys, 0, sizeof(window->keyboard.keys));
 		} return 0;
 
 		case WM_SIZE: {

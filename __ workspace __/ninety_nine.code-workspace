@@ -47,7 +47,7 @@
 			"WIN32_LEAN_AND_MEAN",
 			"DNOMINMAX",
 		],
-		"C_Cpp.intelliSenseCachePath": ".",
+		"C_Cpp.intelliSenseCachePath": "..",
 		// "C_Cpp.intelliSenseCacheSize": 0,
 	},
 	"extensions": {
