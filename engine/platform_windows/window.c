@@ -211,9 +211,10 @@ HDC engine_window_get_hdc(struct Engine_Window * window) {
 //
 
 static void impl_keyboard_process_virtual_key(struct Engine_Window * window, USHORT key, bool is_down) {
-	if ('A'   <= key && key <= 'Z')    { window->keyboard.keys[KC_A  + key - 'A']   = is_down; return; }
-	if ('0'   <= key && key <= '9')    { window->keyboard.keys[KC_D0 + key - '0']   = is_down; return; }
-	if (VK_F1 <= key && key <= VK_F24) { window->keyboard.keys[KC_F1 + key - VK_F1] = is_down; return; }
+	if ('A'        <= key && key <= 'Z')        { window->keyboard.keys[KC_A  + key - 'A']        = is_down; return; }
+	if ('0'        <= key && key <= '9')        { window->keyboard.keys[KC_D0 + key - '0']        = is_down; return; }
+	if (VK_NUMPAD0 <= key && key <= VK_NUMPAD9) { window->keyboard.keys[KC_N0 + key - VK_NUMPAD0] = is_down; return; }
+	if (VK_F1      <= key && key <= VK_F24)     { window->keyboard.keys[KC_F1 + key - VK_F1]      = is_down; return; }
 	//
 	switch (key) {
 		case VK_LEFT:  window->keyboard.keys[KC_Left]  = is_down; break;
@@ -221,14 +222,51 @@ static void impl_keyboard_process_virtual_key(struct Engine_Window * window, USH
 		case VK_DOWN:  window->keyboard.keys[KC_Down]  = is_down; break;
 		case VK_UP:    window->keyboard.keys[KC_Up]    = is_down; break;
 		//
-		case VK_TAB:     window->keyboard.keys[KC_Tab]       = is_down; break;
-		case VK_SHIFT:   window->keyboard.keys[KC_Shift]     = is_down; break;
-		case VK_CONTROL: window->keyboard.keys[KC_Control]   = is_down; break;
-		case VK_MENU:    window->keyboard.keys[KC_Alt]       = is_down; break;
-		case VK_SPACE:   window->keyboard.keys[KC_Space]     = is_down; break;
-		case VK_RETURN:  window->keyboard.keys[KC_Enter]     = is_down; break;
-		case VK_BACK:    window->keyboard.keys[KC_Backspace] = is_down; break;
-		case VK_DELETE:  window->keyboard.keys[KC_Del]       = is_down; break;
+		case VK_LBUTTON:  window->keyboard.keys[KC_M1] = is_down; break;
+		case VK_RBUTTON:  window->keyboard.keys[KC_M2] = is_down; break;
+		case VK_MBUTTON:  window->keyboard.keys[KC_M3] = is_down; break;
+		case VK_XBUTTON1: window->keyboard.keys[KC_M4] = is_down; break;
+		case VK_XBUTTON2: window->keyboard.keys[KC_M5] = is_down; break;
+		//
+		case VK_SHIFT:    window->keyboard.keys[KC_Shift]   = is_down; break;
+		case VK_CONTROL:  window->keyboard.keys[KC_Control] = is_down; break;
+		case VK_MENU:     window->keyboard.keys[KC_Alt]     = is_down; break;
+		//
+		case VK_ESCAPE:   window->keyboard.keys[KC_Esc]         = is_down; break;
+		case VK_RETURN:   window->keyboard.keys[KC_Enter]       = is_down; break;
+		case VK_TAB:      window->keyboard.keys[KC_Tab]         = is_down; break;
+		case VK_SPACE:    window->keyboard.keys[KC_Space]       = is_down; break;
+		case VK_BACK:     window->keyboard.keys[KC_Backspace]   = is_down; break;
+		case VK_DELETE:   window->keyboard.keys[KC_Del]         = is_down; break;
+		case VK_INSERT:   window->keyboard.keys[KC_Insert]      = is_down; break;
+		case VK_HOME:     window->keyboard.keys[KC_Home]        = is_down; break;
+		case VK_END:      window->keyboard.keys[KC_End]         = is_down; break;
+		case VK_SNAPSHOT: window->keyboard.keys[KC_PrintScreen] = is_down; break;
+		case VK_PRIOR:    window->keyboard.keys[KC_PageUp]      = is_down; break;
+		case VK_NEXT:     window->keyboard.keys[KC_PageDown]    = is_down; break;
+		//
+		case VK_CAPITAL:   window->keyboard.keys[KC_CapsLock]   = is_down; break;
+		case VK_NUMLOCK:   window->keyboard.keys[KC_NumLock]    = is_down; break;
+		case VK_SCROLL:    window->keyboard.keys[KC_ScrollLock] = is_down; break;
+		case VK_MULTIPLY:  window->keyboard.keys[KC_Mul]        = is_down; break;
+		case VK_DIVIDE:    window->keyboard.keys[KC_Div]        = is_down; break;
+		case VK_ADD:       window->keyboard.keys[KC_Add]        = is_down; break;
+		case VK_SUBTRACT:  window->keyboard.keys[KC_Sub]        = is_down; break;
+		case VK_DECIMAL:   window->keyboard.keys[KC_Decimal]    = is_down; break;
+		case VK_SEPARATOR: window->keyboard.keys[KC_Separator]  = is_down; break;
+		//
+		case VK_OEM_MINUS:  window->keyboard.keys[KC_Minus]     = is_down; break;
+		case VK_OEM_PLUS:   window->keyboard.keys[KC_Plus]      = is_down; break;
+		case VK_OEM_COMMA:  window->keyboard.keys[KC_Comma]     = is_down; break;
+		case VK_OEM_PERIOD: window->keyboard.keys[KC_Period]    = is_down; break;
+		//
+		case VK_OEM_1:      window->keyboard.keys[KC_Semicolon] = is_down; break;
+		case VK_OEM_2:      window->keyboard.keys[KC_Slash]     = is_down; break;
+		case VK_OEM_3:      window->keyboard.keys[KC_Tilde]     = is_down; break;
+		case VK_OEM_4:      window->keyboard.keys[KC_SquareL]   = is_down; break;
+		case VK_OEM_5:      window->keyboard.keys[KC_Backslash] = is_down; break;
+		case VK_OEM_6:      window->keyboard.keys[KC_SquareR]   = is_down; break;
+		case VK_OEM_7:      window->keyboard.keys[KC_Quote]     = is_down; break;
 	}
 }
 
