@@ -1,4 +1,5 @@
 #include "engine/api/code.h"
+#include "engine/api/maths.h"
 #include "engine/api/math_types.h"
 #include "engine/api/key_codes.h"
 #include "ogl_context.h"
@@ -169,6 +170,11 @@ void engine_window_toggle_borderless_fullsreen(struct Engine_Window * window) {
 	);
 }
 
+u16 engine_window_get_refresh_rate(struct Engine_Window * window, u16 default_value) {
+	int value = GetDeviceCaps(GetDC(window->hwnd), VREFRESH);
+	return value > 1 ? (u16)value : default_value;
+}
+
 //
 // system API
 //
@@ -204,12 +210,6 @@ HDC engine_window_get_hdc(struct Engine_Window * window) {
 // internal implementation
 //
 
-static s32 mul_div(s32 value, s32 numerator, s32 denominator) {
-	s32 a = value / denominator;
-	s32 b = value % denominator;
-	return a * numerator + b * numerator / denominator;
-}
-
 static void impl_keyboard_process_virtual_key(struct Engine_Window * window, USHORT key, bool is_down) {
 	if ('A'   <= key && key <= 'Z')    { window->keyboard.keys[KC_A  + key - 'A']   = is_down; return; }
 	if ('0'   <= key && key <= '9')    { window->keyboard.keys[KC_D0 + key - '0']   = is_down; return; }
@@ -242,8 +242,8 @@ static void raw_input_callback_mouse(struct Engine_Window * window, RAWMOUSE * d
 		svec2 const previous_display_position = window->mouse.display_position;
 
 		POINT position = (POINT){
-			.x = mul_div(data->lLastX, width,  UINT16_MAX),
-			.y = mul_div(data->lLastY, height, UINT16_MAX),
+			.x = mul_div_s32(data->lLastX, width,  UINT16_MAX),
+			.y = mul_div_s32(data->lLastY, height, UINT16_MAX),
 		};
 		window->mouse.display_position = (svec2){position.x, position.y};
 		window->mouse.display_position.y = height - (window->mouse.display_position.y + 1);

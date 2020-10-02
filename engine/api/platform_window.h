@@ -23,4 +23,6 @@ bool engine_window_key_transition(struct Engine_Window * window, u8 key, bool st
 void engine_window_toggle_raw_input(struct Engine_Window * window);
 void engine_window_toggle_borderless_fullsreen(struct Engine_Window * window);
 
+u16 engine_window_get_refresh_rate(struct Engine_Window * window, u16 default_value);
+
 #endif // ENGINE_WINDOW

@@ -1,4 +1,5 @@
 #include "engine/api/code.h"
+#include "time_system.h"
 #include "window_system.h"
 #include "ogl_system.h"
 
@@ -20,6 +21,7 @@ bool engine_system_should_close;
 
 void engine_system_init(void) {
 	impl_set_process_dpi_awareness();
+	engine_system_init_time();
 	engine_system_register_window_class();
 	engine_system_init_opengl();
 
@@ -32,6 +34,7 @@ void engine_system_init(void) {
 }
 
 void engine_system_deinit(void) {
+	engine_system_deinit_time();
 	engine_system_unregister_window_class();
 	engine_system_deinit_opengl();
 }
