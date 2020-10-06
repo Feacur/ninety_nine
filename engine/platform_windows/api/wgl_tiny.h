@@ -1,5 +1,5 @@
-#if !defined(ENGINE_OGL_WGL_TINY)
-#define ENGINE_OGL_WGL_TINY
+#if !defined(ENGINE_WGL_TINY)
+#define ENGINE_WGL_TINY
 
 #include <Windows.h>
 
@@ -23,7 +23,7 @@ typedef HGLRC (WINAPI CreateContext_func)(HDC hDc);
 typedef BOOL  (WINAPI DeleteContext_func)(HGLRC oldContext);
 typedef PROC  (WINAPI GetProcAddress_func)(LPCSTR lpszProc);
 typedef BOOL  (WINAPI MakeCurrent_func)(HDC hDc, HGLRC newContext);
-typedef BOOL  (WINAPI ShareLists_func)(HGLRC hrcSrvShare, HGLRC hrcSrvSource);
+// typedef BOOL  (WINAPI ShareLists_func)(HGLRC hrcSrvShare, HGLRC hrcSrvSource);
 // typedef BOOL  (WINAPI SwapLayerBuffers_func)(HDC hDc, UINT plane);
 // typedef HDC   (WINAPI GetCurrentDC_func)(void);
 // typedef HGLRC (WINAPI GetCurrentContext_func)(void);
@@ -111,4 +111,4 @@ typedef BOOL  (WINAPI GetPixelFormatAttribivARB_func)(HDC hdc, int iPixelFormat,
 #define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
 #define WGL_CONTEXT_ES2_PROFILE_BIT_EXT   0x00000004
 
-#endif // ENGINE_OGL_WGL_TINY
+#endif // ENGINE_WGL_TINY

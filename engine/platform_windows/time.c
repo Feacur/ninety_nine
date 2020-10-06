@@ -49,13 +49,13 @@ void engine_time_wait_sleep(u64 start_ticks, u64 duration, u64 precision) {
 // system API
 //
 
-#include "time_system.h"
+#include "api/time_system.h"
 
-void engine_system_init_time(void) {
+void engine_time_system_init(void) {
 	LARGE_INTEGER performance_frequency;
 	QueryPerformanceFrequency(&performance_frequency);
 	engine_time_precision = (u64)performance_frequency.QuadPart;
 }
 
-void engine_system_deinit_time(void) {
+void engine_time_system_deinit(void) {
 }

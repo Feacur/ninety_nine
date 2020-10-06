@@ -2,13 +2,13 @@
 #include "engine/api/maths.h"
 #include "engine/api/math_types.h"
 #include "engine/api/key_codes.h"
-#include "ogl_context.h"
+#include "api/context.h"
+#include "api/window_internal.h"
 
 #include <Windows.h>
 #include <hidusage.h>
 
 //
-#define ENGINE_WINDOW_CLASS_NAME "engine_window_class_name"
 #define ENGINE_WINDOW_POINTER "engine_window_pointer"
 
 static HWND impl_window_raw_input_target = NULL;
@@ -36,7 +36,7 @@ struct Engine_Window {
 		bool keys[256];
 		bool prev[256];
 	} keyboard;
-	struct Rendering_Context_OGL * rendering_context;
+	struct Rendering_Context * rendering_context;
 };
 
 struct Engine_Window * engine_window_create(void) {
@@ -46,7 +46,6 @@ struct Engine_Window * engine_window_create(void) {
 		WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR,
 		ENGINE_WINDOW_CLASS_NAME, "ninety nine",
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-		// int X, Y, nWidth, nHeight
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		HWND_DESKTOP, NULL, GetModuleHandle(NULL), NULL
 	);
@@ -69,7 +68,11 @@ bool engine_window_is_active(struct Engine_Window * window) {
 }
 
 void engine_window_init_context(struct Engine_Window * window) {
-	window->rendering_context = engine_ogl_context_create(window);
+	window->rendering_context = engine_context_create(window);
+}
+
+void engine_window_deinit_context(struct Engine_Window * window) {
+	engine_context_destroy(window->rendering_context);
 }
 
 static void engine_window_reset_input(struct Engine_Window * window) {
@@ -179,9 +182,9 @@ u16 engine_window_get_refresh_rate(struct Engine_Window * window, u16 default_va
 // system API
 //
 
-#include "window_system.h"
+#include "api/window_system.h"
 
-void engine_system_register_window_class(void) {
+void engine_window_system_init(void) {
 	RegisterClassExA(&(WNDCLASSEXA){
 		.cbSize        = sizeof(WNDCLASSEXA),
 		.lpszClassName = ENGINE_WINDOW_CLASS_NAME,
@@ -192,7 +195,7 @@ void engine_system_register_window_class(void) {
 	});
 }
 
-void engine_system_unregister_window_class(void) {
+void engine_window_system_deinit(void) {
 	UnregisterClassA(ENGINE_WINDOW_CLASS_NAME, GetModuleHandleA(NULL));
 }
 
@@ -200,7 +203,7 @@ void engine_system_unregister_window_class(void) {
 // context API
 //
 
-#include "window_context.h"
+#include "api/window_context.h"
 
 HDC engine_window_get_hdc(struct Engine_Window * window) {
 	return GetDC(window->hwnd);
@@ -511,7 +514,7 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 		case WM_DESTROY: {
 			RemovePropA(hwnd, ENGINE_WINDOW_POINTER);
 			if (impl_window_raw_input_target == hwnd) { engine_window_toggle_raw_input(window); }
-			if (window->rendering_context) { engine_ogl_context_destroy(window->rendering_context); }
+			if (window->rendering_context) { engine_context_destroy(window->rendering_context); }
 			if (window->hwnd == hwnd) { ENGINE_FREE(window); }
 		} return 0;
 	}
@@ -520,5 +523,4 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 }
 
 //
-#undef ENGINE_WINDOW_CLASS_NAME
 #undef ENGINE_WINDOW_POINTER
