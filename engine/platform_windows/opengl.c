@@ -31,19 +31,25 @@ struct Pixel_Format hint_pixel_format;
 struct Opengl_Library {
 	HMODULE library;
 
-	// WGL functions
-	CreateContext_func  * CreateContext;
-	DeleteContext_func  * DeleteContext;
-	GetProcAddress_func * GetProcAddress;
-	MakeCurrent_func    * MakeCurrent;
+	struct {
+		// DLL
+		CreateContext_func  * CreateContext;
+		DeleteContext_func  * DeleteContext;
+		GetProcAddress_func * GetProcAddress;
+		MakeCurrent_func    * MakeCurrent;
+		ShareLists_func     * ShareLists;
+		// ARB
+		CreateContextAttribsARB_func   * CreateContextAttribsARB;
+		GetPixelFormatAttribivARB_func * GetPixelFormatAttribivARB;
+	} wgl;
 
-	// ARB functions
-	CreateContextAttribsARB_func   * CreateContextAttribsARB;
-	GetPixelFormatAttribivARB_func * GetPixelFormatAttribivARB;
+	cstring extensions_ext;
+	cstring extensions_arb;
 };
 static struct Opengl_Library * instance;
 
-static void impl_handle_extensions_loading(struct Opengl_Library * opengl, HDC hdc);
+static void impl_handle_extensions_loading(struct Opengl_Library * opengl, HDC device_context);
+static bool impl_contains_full_word(cstring container, cstring value);
 
 //
 // API
@@ -54,7 +60,7 @@ static void impl_handle_extensions_loading(struct Opengl_Library * opengl, HDC h
 void * engine_opengl_get_function(cstring name) {
 	if (!name) { return NULL; }
 
-	PROC ogl_address = instance->GetProcAddress(name);
+	PROC ogl_address = instance->wgl.GetProcAddress(name);
 	if (ogl_address) { return (void *)ogl_address; }
 
 	FARPROC dll_address = GetProcAddress(instance->library, name);
@@ -75,7 +81,7 @@ void engine_opengl_system_init(void) {
 	opengl->library = LoadLibraryA(ENGINE_OPENGL_LIBRARY_NAME);
 
 	//
-	#define LOAD_FUNCTION(name) opengl->name = (name ## _func *)GetProcAddress(opengl->library, "wgl" # name)
+	#define LOAD_FUNCTION(name) opengl->wgl.name = (name ## _func *)GetProcAddress(opengl->library, "wgl" # name)
 	LOAD_FUNCTION(GetProcAddress);
 	LOAD_FUNCTION(CreateContext);
 	LOAD_FUNCTION(DeleteContext);
@@ -113,42 +119,32 @@ void engine_opengl_system_deinit(void) {
 
 #include "api/opengl_context.h"
 
-HGLRC engine_opengl_context_create(HDC hdc) {
-	(void)hdc;
-	return NULL;
+HGLRC engine_opengl_context_create(HDC device_context) {
+	HGLRC const shared = NULL;
+	HGLRC hglrc;
+
+	bool ARB_create_context = impl_contains_full_word(instance->extensions_arb, "WGL_ARB_create_context");
+
+	if (ARB_create_context && instance->wgl.CreateContext) {
+		int * attributes = NULL;
+		hglrc = instance->wgl.CreateContextAttribsARB(device_context, shared, attributes);
+	}
+	else {
+		hglrc = instance->wgl.CreateContext(device_context);
+		if (shared) { instance->wgl.ShareLists(shared, hglrc); }
+	}
+	return hglrc;
 }
 
-void engine_opengl_context_destroy(HGLRC hrc) {
-	(void)hrc;
+void engine_opengl_context_destroy(HGLRC handle) {
+	instance->wgl.DeleteContext(handle);
 }
-
-// bool engine_opengl_has_extension(cstring container, cstring value) {
-// 	cstring start = container;
-// 	cstring end   = container + strlen(container);
-
-// 	while (true) {
-// 		cstring from = strstr(start, value);
-// 		if (!from) { break; }
-
-// 		cstring to = from + strlen(value);
-// 		if (to > end) { break; }
-
-// 		if (from == start || *(from - 1) == ' ') {
-// 			if (*to == ' ')  { return true; }
-// 			if (*to == '\0') { return true; }
-// 		}
-
-// 		start = to;
-// 	}
-
-// 	return false;
-// }
 
 //
 // internal implementaion, system
 //
 
-static void impl_handle_extensions_loading(struct Opengl_Library * opengl, HDC hdc) {
+static void impl_handle_extensions_loading(struct Opengl_Library * opengl, HDC device_context) {
 	PIXELFORMATDESCRIPTOR pfd = {
 		.nSize        = sizeof(pfd),
 		.nVersion     = 1,
@@ -160,25 +156,54 @@ static void impl_handle_extensions_loading(struct Opengl_Library * opengl, HDC h
 		.cStencilBits = 8,
 	};
 
-	int pfd_id = ChoosePixelFormat(hdc, &pfd);
+	int pfd_id = ChoosePixelFormat(device_context, &pfd);
 	if (!pfd_id) { ENGINE_DEBUG_BREAK(); return; }
-	if (!SetPixelFormat(hdc, pfd_id, &pfd)) { ENGINE_DEBUG_BREAK(); return; }
 
-	HGLRC hrc = opengl->CreateContext(hdc);
+	BOOL pfd_found = SetPixelFormat(device_context, pfd_id, &pfd);
+	if (!pfd_found) { ENGINE_DEBUG_BREAK(); return; }
+
+	HGLRC hrc = opengl->wgl.CreateContext(device_context);
 	if (!hrc) { ENGINE_DEBUG_BREAK(); return; }
 
-	if (!opengl->MakeCurrent(hdc, hrc)) {
-		opengl->DeleteContext(hrc);
-		ENGINE_DEBUG_BREAK(); return;
+	if (!opengl->wgl.MakeCurrent(device_context, hrc)) { ENGINE_DEBUG_BREAK(); }
+	else {
+		#define LOAD_FUNCTION(name) opengl->wgl.name = (name ## _func *)opengl->wgl.GetProcAddress("wgl" # name)
+		LOAD_FUNCTION(CreateContextAttribsARB);
+		LOAD_FUNCTION(GetPixelFormatAttribivARB);
+		#undef LOAD_FUNCTION
+
+		#define LOAD_FUNCTION(name) name ## _func * wgl ## name = (name ## _func *)opengl->wgl.GetProcAddress("wgl" # name)
+		LOAD_FUNCTION(GetExtensionsStringEXT);
+		LOAD_FUNCTION(GetExtensionsStringARB);
+		#undef LOAD_FUNCTION
+
+		opengl->extensions_ext = wglGetExtensionsStringEXT();
+		opengl->extensions_arb = wglGetExtensionsStringARB(device_context);
 	}
 
-	#define LOAD_FUNCTION(name) opengl->name = (name ## _func *)opengl->GetProcAddress("wgl" # name)
-	LOAD_FUNCTION(CreateContextAttribsARB);
-	LOAD_FUNCTION(GetPixelFormatAttribivARB);
-	#undef LOAD_FUNCTION
+	opengl->wgl.MakeCurrent(NULL, NULL);
+	opengl->wgl.DeleteContext(hrc);
+}
 
-	opengl->MakeCurrent(NULL, NULL);
-	opengl->DeleteContext(hrc);
+static bool impl_contains_full_word(cstring container, cstring value) {
+	if (!container) { return false; }
+	if (!value) {     return false; }
+
+	size_t container_size = strlen(container);
+	size_t value_size     = strlen(value);
+
+	cstring start = container;
+	while (*start) {
+		while (*start == ' ') { ++start; }
+		cstring end = strchr(start, ' ');
+		if (!end) { end = container + container_size; }
+
+		if ((size_t)(end - start) == value_size && strncmp(start, value, value_size)) { return true; }
+
+		start = end;
+	}
+
+	return false;
 }
 
 //

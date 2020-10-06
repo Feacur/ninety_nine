@@ -21,21 +21,27 @@
 #include "api/context.h"
 
 struct Rendering_Context {
-	HDC   hdc;
-	HGLRC hrc;
-	u8    vsync;
+	HGLRC handle;
+	struct Engine_Window * window;
 };
 
 struct Rendering_Context * engine_context_create(struct Engine_Window * window) {
 	struct Rendering_Context * context = ENGINE_MALLOC(sizeof(*context));
-	context->hdc = engine_window_get_hdc(window);
-	context->hrc = engine_opengl_context_create(context->hdc);
-	context->vsync = 0;
+	memset(context, 0, sizeof(*context));
+
+	HWND hwnd = engine_window_context_get_handle(window);
+	HDC  hdc  = GetDC(hwnd);
+
+	context->handle = engine_opengl_context_create(hdc);
+	context->window = window;
+
+	ReleaseDC(hwnd, hdc);
+
 	return context;
 }
 
 void engine_context_destroy(struct Rendering_Context * context) {
-	engine_opengl_context_destroy(context->hrc);
-	context->hrc = NULL;
+	engine_opengl_context_destroy(context->handle); context->handle = NULL;
+	engine_window_context_detach(context->window); context->window = NULL;
 	ENGINE_FREE(context);
 }

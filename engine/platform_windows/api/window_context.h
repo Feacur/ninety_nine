@@ -4,6 +4,7 @@
 #include <Windows.h>
 
 struct Engine_Window;
-HDC engine_window_get_hdc(struct Engine_Window * window);
+HWND engine_window_context_get_handle(struct Engine_Window * window);
+void engine_window_context_detach(struct Engine_Window * context);
 
 #endif // ENGINE_WINDOW_CONTEXT

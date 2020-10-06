@@ -3,7 +3,7 @@
 
 #include <Windows.h>
 
-HGLRC engine_opengl_context_create(HDC hdc);
-void  engine_opengl_context_destroy(HGLRC hrc);
+HGLRC engine_opengl_context_create(HDC device_context);
+void  engine_opengl_context_destroy(HGLRC hglrc);
 
 #endif // ENGINE_OPENGL_CONTEXT

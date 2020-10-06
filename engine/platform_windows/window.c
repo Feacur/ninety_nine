@@ -22,8 +22,12 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 #include "engine/api/platform_window.h"
 
 struct Engine_Window {
-	HWND hwnd;
+	HWND handle;
+	struct Rendering_Context * rendering_context;
+
 	svec2 size;
+	u8 vsync;
+
 	struct {
 		svec2 delta;
 		svec2 display_position;
@@ -32,39 +36,40 @@ struct Engine_Window {
 		bool  keys[8];
 		bool  prev[8];
 	} mouse;
+
 	struct {
 		bool keys[256];
 		bool prev[256];
 	} keyboard;
-	struct Rendering_Context * rendering_context;
 };
 
 struct Engine_Window * engine_window_create(void) {
 	struct Engine_Window * window = ENGINE_MALLOC(sizeof(*window));
+	memset(window, 0, sizeof(*window));
 
-	window->hwnd = CreateWindowExA(
+	window->handle = CreateWindowExA(
 		WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR,
 		ENGINE_WINDOW_CLASS_NAME, "ninety nine",
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		HWND_DESKTOP, NULL, GetModuleHandle(NULL), NULL
 	);
-	SetPropA(window->hwnd, ENGINE_WINDOW_POINTER, window);
+	SetPropA(window->handle, ENGINE_WINDOW_POINTER, window);
 
 	RECT window_rect;
-	GetClientRect(window->hwnd, &window_rect);
+	GetClientRect(window->handle, &window_rect);
 	window->size = (svec2){window_rect.right - window_rect.left, window_rect.bottom - window_rect.top};
 
 	return window;
 }
 
 void engine_window_destroy(struct Engine_Window * window) {
-	if (window->hwnd) { DestroyWindow(window->hwnd); return; }
+	if (window->handle) { DestroyWindow(window->handle); return; }
 	ENGINE_FREE(window);
 }
 
 bool engine_window_is_active(struct Engine_Window * window) {
-	return window->hwnd;
+	return window->handle;
 }
 
 void engine_window_init_context(struct Engine_Window * window) {
@@ -126,9 +131,9 @@ void engine_window_toggle_raw_input(struct Engine_Window * window) {
 	// https://docs.microsoft.com/windows-hardware/drivers/hid/hid-usages
 	HWND hwnd_target; USHORT flags;
 	if (!impl_window_raw_input_target) {
-		hwnd_target = window->hwnd; flags = 0;
+		hwnd_target = window->handle; flags = 0;
 	}
-	else if (impl_window_raw_input_target == window->hwnd) {
+	else if (impl_window_raw_input_target == window->handle) {
 		hwnd_target = NULL; flags = RIDEV_REMOVE;
 	}
 	else { return; }
@@ -144,7 +149,7 @@ void engine_window_toggle_raw_input(struct Engine_Window * window) {
 
 void engine_window_toggle_borderless_fullsreen(struct Engine_Window * window) {
 	static WINDOWPLACEMENT window_placement;
-	HWND const hwnd = window->hwnd;
+	HWND const hwnd = window->handle;
 	
 	LONG window_style = GetWindowLongA(hwnd, GWL_STYLE);
 	if ((window_style & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
@@ -174,7 +179,7 @@ void engine_window_toggle_borderless_fullsreen(struct Engine_Window * window) {
 }
 
 u16 engine_window_get_refresh_rate(struct Engine_Window * window, u16 default_value) {
-	int value = GetDeviceCaps(GetDC(window->hwnd), VREFRESH);
+	int value = GetDeviceCaps(GetDC(window->handle), VREFRESH);
 	return value > 1 ? (u16)value : default_value;
 }
 
@@ -205,8 +210,12 @@ void engine_window_system_deinit(void) {
 
 #include "api/window_context.h"
 
-HDC engine_window_get_hdc(struct Engine_Window * window) {
-	return GetDC(window->hwnd);
+HWND engine_window_context_get_handle(struct Engine_Window * window) {
+	return window->handle;
+}
+
+void engine_window_context_detach(struct Engine_Window * window) {
+	window->rendering_context = NULL;
 }
 
 //
@@ -289,7 +298,7 @@ static void raw_input_callback_mouse(struct Engine_Window * window, RAWMOUSE * d
 		window->mouse.display_position = (svec2){position.x, position.y};
 		window->mouse.display_position.y = height - (window->mouse.display_position.y + 1);
 	
-		ScreenToClient(window->hwnd, &position);
+		ScreenToClient(window->handle, &position);
 		window->mouse.window_position = (svec2){position.x, position.y};
 		window->mouse.window_position.y = window->size.y - (window->mouse.window_position.y + 1);
 
@@ -306,7 +315,7 @@ static void raw_input_callback_mouse(struct Engine_Window * window, RAWMOUSE * d
 		window->mouse.display_position = (svec2){position.x, position.y};
 		window->mouse.display_position.y = height - (window->mouse.display_position.y + 1);
 
-		ScreenToClient(window->hwnd, &position);
+		ScreenToClient(window->handle, &position);
 		window->mouse.window_position = (svec2){position.x, position.y};
 		window->mouse.window_position.y  = window->size.y - (window->mouse.window_position.y + 1);
 
@@ -365,7 +374,7 @@ static void raw_input_callback_hid(struct Engine_Window * window, RAWHID * data)
 static void impl_process_message_raw(struct Engine_Window * window, WPARAM wParam, LPARAM lParam) {
 	// https://docs.microsoft.com/windows/win32/inputdev/raw-input
 	(void)wParam; (void)lParam;
-	if (impl_window_raw_input_target != window->hwnd) { return; }
+	if (impl_window_raw_input_target != window->handle) { return; }
 
 	RAWINPUTHEADER header;
 	UINT buffer_size = sizeof(header);
@@ -391,7 +400,7 @@ static void impl_process_message_raw(struct Engine_Window * window, WPARAM wPara
 
 static void impl_process_message_mouse(struct Engine_Window * window, WPARAM wParam, LPARAM lParam, bool client_space, vec2 wheel_mask) {
 	// https://docs.microsoft.com/windows/win32/inputdev/mouse-input
-	if (impl_window_raw_input_target == window->hwnd) { return; }
+	if (impl_window_raw_input_target == window->handle) { return; }
 
 	int const height = GetSystemMetrics(SM_CYSCREEN);
 
@@ -400,12 +409,12 @@ static void impl_process_message_mouse(struct Engine_Window * window, WPARAM wPa
 	if (client_space) {
 		client = (POINT){.x = points.x, .y = points.y};
 		screen = client;
-		ClientToScreen(window->hwnd, &screen);
+		ClientToScreen(window->handle, &screen);
 	}
 	else {
 		screen = (POINT){.x = points.x, .y = points.y};
 		client = screen;
-		ScreenToClient(window->hwnd, &client);
+		ScreenToClient(window->handle, &client);
 	}
 
 	svec2 const previous_display_position = window->mouse.display_position;
@@ -446,7 +455,7 @@ static void impl_process_message_mouse(struct Engine_Window * window, WPARAM wPa
 static void impl_process_message_keyboard(struct Engine_Window * window, WPARAM wParam, LPARAM lParam) {
 	// https://docs.microsoft.com/windows/win32/inputdev/keyboard-input
 	(void)wParam; (void)lParam;
-	if (impl_window_raw_input_target == window->hwnd) { return; }
+	if (impl_window_raw_input_target == window->handle) { return; }
 
 	WORD flag = HIWORD(lParam);
 	bool is_up = (flag & KF_UP) == KF_UP;
@@ -507,7 +516,7 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 			// if (window->callbacks.close) {
 			// 	(*window->callbacks.close)(window);
 			// }
-			window->hwnd = NULL;
+			window->handle = NULL;
 			DestroyWindow(hwnd);
 		} return 0;
 
@@ -515,7 +524,7 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 			RemovePropA(hwnd, ENGINE_WINDOW_POINTER);
 			if (impl_window_raw_input_target == hwnd) { engine_window_toggle_raw_input(window); }
 			if (window->rendering_context) { engine_context_destroy(window->rendering_context); }
-			if (window->hwnd == hwnd) { ENGINE_FREE(window); }
+			if (window->handle == hwnd) { ENGINE_FREE(window); }
 		} return 0;
 	}
 

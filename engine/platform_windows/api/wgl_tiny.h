@@ -4,29 +4,15 @@
 #include <Windows.h>
 
 // https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_debug_output.txt
-// Debug contexts
-// A context can be created in debug mode. This allows, among other things, debug output functionality to work more effectively.
-
 // https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_create_context_no_error.txt
-// No error contexts
-// An OpenGL Context can be created which does not report OpenGL Errors. If the context bit GL_CONTEXT_FLAG_NO_ERROR_BIT is set to true, then the context will not report most errors. It will still report GL_OUT_OF_MEMORY_ERROR where appropriate, but this can be delayed from the point where the error actually happens. No other errors will be reported.
-// This also means that the implementation will not check for errors either. So if you provide incorrect parameters to a function that would have provoked an error, you will get undefined behavior instead. This includes the possibility of application termination.
-// Contexts cannot have the no error bit and the robustsness or debug bits.
-
 // https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_robustness.txt
-// Robust access context
-// Normally, many buffer memory access operations that access data outside of the bound range of storage have undefined results (potentially including program termination). However, if the program doesn't crash, this can lead to being able to read values that were written by other applications, which is a security concern.
-// Robust access means that out-of-bounds reads will provide well-defined results (usually zero). And such accesses will never cause program termination. It provides better process isolation.
 
-// https://docs.microsoft.com/windows/win32/api/wingdi/
+// https://docs.microsoft.com/windows/win32/opengl/wgl-and-windows-reference
 typedef HGLRC (WINAPI CreateContext_func)(HDC hDc);
 typedef BOOL  (WINAPI DeleteContext_func)(HGLRC oldContext);
 typedef PROC  (WINAPI GetProcAddress_func)(LPCSTR lpszProc);
 typedef BOOL  (WINAPI MakeCurrent_func)(HDC hDc, HGLRC newContext);
-// typedef BOOL  (WINAPI ShareLists_func)(HGLRC hrcSrvShare, HGLRC hrcSrvSource);
-// typedef BOOL  (WINAPI SwapLayerBuffers_func)(HDC hDc, UINT plane);
-// typedef HDC   (WINAPI GetCurrentDC_func)(void);
-// typedef HGLRC (WINAPI GetCurrentContext_func)(void);
+typedef BOOL  (WINAPI ShareLists_func)(HGLRC hrcSrvShare, HGLRC hrcSrvSource);
 
 // https://www.khronos.org/registry/OpenGL/extensions/EXT
 typedef char const * (WINAPI GetExtensionsStringEXT_func)(void);
@@ -37,7 +23,6 @@ typedef int  (WINAPI GetSwapIntervalEXT_func)(void);
 typedef char const * (WINAPI GetExtensionsStringARB_func)(HDC hdc);
 typedef HGLRC (WINAPI CreateContextAttribsARB_func)(HDC hDC, HGLRC hShareContext, const int *attribList);
 typedef BOOL  (WINAPI GetPixelFormatAttribivARB_func)(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues);
-// typedef BOOL  (WINAPI ChoosePixelFormatARB_func)(HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats);
 
 // pixel format attribute keys
 #define WGL_NUMBER_PIXEL_FORMATS_ARB      0x2000
