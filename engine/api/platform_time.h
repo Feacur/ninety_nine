@@ -1,5 +1,5 @@
-#if !defined(ENGINE_TIME)
-#define ENGINE_TIME
+#if !defined(ENGINE_PLATFORM_TIME)
+#define ENGINE_PLATFORM_TIME
 
 #include "engine/api/types.h"
 
@@ -12,4 +12,4 @@ u64  engine_time_get_ticks(void);
 void engine_time_wait_idle(u64 start_ticks, u64 duration, u64 precision);
 void engine_time_wait_sleep(u64 start_ticks, u64 duration, u64 precision);
 
-#endif // ENGINE_TIME
+#endif // ENGINE_PLATFORM_TIME

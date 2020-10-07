@@ -1,16 +1,13 @@
 #if !defined(ENGINE_GRAPHICS_TYPES)
 #define ENGINE_GRAPHICS_TYPES
 
-struct Settings_OGL {
-	int major, minor;
-};
-
-struct Pixel_Format {
+struct Settings_CTX {
+	int version;
+	int buffering;
 	int r, g, b, a;
 	int depth, stencil;
 };
 
-extern struct Settings_OGL hint_settings_ogl;
-extern struct Pixel_Format hint_pixel_format;
+extern struct Settings_CTX hint_settings_ctx;
 
 #endif // ENGINE_GRAPHICS_TYPES

@@ -1,5 +1,5 @@
-#if !defined(ENGINE_WINDOW)
-#define ENGINE_WINDOW
+#if !defined(ENGINE_PLATFORM_WINDOW)
+#define ENGINE_PLATFORM_WINDOW
 
 #include "engine/api/math_types.h"
 
@@ -26,4 +26,4 @@ void engine_window_toggle_borderless_fullsreen(struct Engine_Window * window);
 
 u16 engine_window_get_refresh_rate(struct Engine_Window * window, u16 default_value);
 
-#endif // ENGINE_WINDOW
+#endif // ENGINE_PLATFORM_WINDOW

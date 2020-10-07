@@ -21,16 +21,12 @@ int main(int argc, char * argv[]) {
 	free(buffer);
 
 	//
-	hint_settings_ogl.major = 4;
-	hint_settings_ogl.minor = 6;
-
-	//
-	hint_pixel_format.r = 8;
-	hint_pixel_format.g = 8;
-	hint_pixel_format.b = 8;
-	hint_pixel_format.a = 8;
-	hint_pixel_format.depth   = 24;
-	hint_pixel_format.stencil = 8;
+	hint_settings_ctx = (struct Settings_CTX){
+		.version = 46,
+		.buffering = true,
+		.r = 8, .g = 8, .b = 8, .a = 8,
+		.depth = 24, .stencil = 8,
+	};
 
 	u64 start_ticks = engine_time_get_ticks();
 	struct Engine_Window * window = engine_window_create();

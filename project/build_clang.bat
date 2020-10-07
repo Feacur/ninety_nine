@@ -52,7 +52,6 @@ if defined unity_build (
 	clang -std=c99 -c "../engine/internal/*.c"         %compiler% %warnings%
 	clang -std=c99 -c "../engine/platform_windows/*.c" %compiler% %warnings%
 	clang -std=c99 -c "../sandbox/*.c"                 %compiler% %warnings%
-	clang -std=c99 -c "../third_party/glad/*.c"        %compiler%
 	rem clang -std=c99 -c "../third_party/stb/*.c"         %compiler%
 	move ".\*.o" ".\temp"
 	lld-link "./temp/*.o" libcmt.lib -out:"ninety_nine.exe" %linker%

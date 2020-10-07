@@ -48,7 +48,6 @@ if defined unity_build (
 	cl -std:c11 -c "../engine/internal/*.c"         %compiler% %warnings%
 	cl -std:c11 -c "../engine/platform_windows/*.c" %compiler% %warnings%
 	cl -std:c11 -c "../sandbox/*.c"                 %compiler% %warnings%
-	cl -std:c11 -c "../third_party/glad/*.c"        %compiler%
 	rem cl -std:c11 -c "../third_party/stb/*.c"         %compiler%
 	link "./temp/*.obj" -out:"ninety_nine.exe" %linker%
 )

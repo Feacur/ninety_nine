@@ -1,5 +1,5 @@
-#if !defined(ENGINE_SYSTEM)
-#define ENGINE_SYSTEM
+#if !defined(ENGINE_PLATFORM_SYSTEM)
+#define ENGINE_PLATFORM_SYSTEM
 
 #include "engine/api/types.h"
 
@@ -8,4 +8,4 @@ void engine_system_init(void);
 void engine_system_deinit(void);
 void engine_system_poll_events(void);
 
-#endif // ENGINE_SYSTEM
+#endif // ENGINE_PLATFORM_SYSTEM

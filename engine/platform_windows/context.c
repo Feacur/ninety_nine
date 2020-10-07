@@ -1,18 +1,8 @@
 #include "engine/api/code.h"
 #include "engine/api/types.h"
+#include "engine/api/platform_opengl.h"
 #include "api/window_context.h"
 #include "api/opengl_context.h"
-
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wreserved-id-macro"
-#endif
-
-#include "glad/glad.h"
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
 
 //
 // API
