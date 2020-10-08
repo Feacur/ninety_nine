@@ -1,5 +1,5 @@
-#if !defined(ENGINE_WGL)
-#define ENGINE_WGL
+#if !defined(ENGINE_WGL_WRAPPER)
+#define ENGINE_WGL_WRAPPER
 
 #if defined(__clang__)
 #pragma clang diagnostic push
@@ -12,4 +12,4 @@
 #pragma clang diagnostic pop
 #endif
 
-#endif // ENGINE_WGL
+#endif // ENGINE_WGL_WRAPPER

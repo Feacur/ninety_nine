@@ -1,7 +1,7 @@
-#if !defined(ENGINE_WINDOW_SYSTEM)
-#define ENGINE_WINDOW_SYSTEM
+#if !defined(ENGINE_SYSTEM__WINDOW)
+#define ENGINE_SYSTEM__WINDOW
 
 void engine_system__window_init(void);
 void engine_system__window_deinit(void);
 
-#endif // ENGINE_WINDOW_SYSTEM
+#endif // ENGINE_SYSTEM__WINDOW

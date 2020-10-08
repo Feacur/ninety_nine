@@ -1,8 +1,11 @@
-#if !defined(ENGINE_RENDERING_LIBRARY_CONTEXT)
-#define ENGINE_RENDERING_LIBRARY_CONTEXT
+#if !defined(ENGINE_LIBRARY_CONTEXT)
+#define ENGINE_LIBRARY_CONTEXT
 
 #include "engine/api/types.h"
+#include "engine/api/opengl.h"
 #include <Windows.h>
+
+struct OpenGL engine_load_functions(void);
 
 bool engine_has_arb(cstring name);
 bool engine_has_ext(cstring name);
@@ -20,4 +23,4 @@ HGLRC        engine_CreateContextAttribsARB(HDC hDC, HGLRC hShareContext, const 
 const char * engine_GetExtensionsStringEXT(void);
 BOOL         engine_SwapIntervalEXT(int interval);
 
-#endif // ENGINE_RENDERING_LIBRARY_CONTEXT
+#endif // ENGINE_LIBRARY_CONTEXT

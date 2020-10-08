@@ -10,6 +10,7 @@
 
 //
 struct Settings_CTX hint_settings_ctx;
+struct OpenGL * gl;
 
 struct Pixel_Format {
 	struct Settings_CTX settings;
@@ -17,7 +18,6 @@ struct Pixel_Format {
 };
 
 static HGLRC impl_create_context_auto(HDC hdc);
-static void impl_destroy_context(HGLRC hglrc);
 
 #define HAS_ARB(name) engine_has_arb(# name)
 // #define HAS_EXT(name) engine_has_ext(# name)
@@ -30,28 +30,56 @@ static void impl_destroy_context(HGLRC hglrc);
 
 struct Rendering_Context {
 	HGLRC handle;
+	struct OpenGL gl;
 	struct Engine_Window * window;
+	HDC cached_device;
 };
 
 struct Rendering_Context * engine_rendering_context_create(struct Engine_Window * window) {
 	struct Rendering_Context * context = ENGINE_MALLOC(sizeof(*context));
 	memset(context, 0, sizeof(*context));
+	context->window = window;
 
 	HWND hwnd = engine_rendering_context__window_get_handle(window);
 	HDC  hdc  = GetDC(hwnd);
 
 	context->handle = impl_create_context_auto(hdc);
-	context->window = window;
+	engine_MakeCurrent(hdc, context->handle);
 
+	context->gl = engine_load_functions();
+
+	engine_MakeCurrent(NULL, NULL);
 	ReleaseDC(hwnd, hdc);
 
 	return context;
 }
 
 void engine_rendering_context_destroy(struct Rendering_Context * context) {
-	impl_destroy_context(context->handle); context->handle = NULL;
-	engine_rendering_context__window_detach(context->window); context->window = NULL;
+	engine_rendering_context_release(context);
+	engine_rendering_context__window_detach(context->window);
+	engine_DeleteContext(context->handle);
 	ENGINE_FREE(context);
+}
+
+void engine_rendering_context_aquire(struct Rendering_Context * context) {
+	if (context->cached_device) { return; }
+
+	HWND hwnd = engine_rendering_context__window_get_handle(context->window);
+	context->cached_device = GetDC(hwnd);
+
+	engine_MakeCurrent(context->cached_device, context->handle);
+	gl = &context->gl;
+}
+
+void engine_rendering_context_release(struct Rendering_Context * context) {
+	if (!context->cached_device) { return; }
+
+	gl = NULL;
+	engine_MakeCurrent(NULL, NULL);
+
+	HWND hwnd = engine_rendering_context__window_get_handle(context->window);
+	ReleaseDC(hwnd, context->cached_device);
+	context->cached_device = NULL;
 }
 
 //
@@ -315,10 +343,6 @@ static HGLRC impl_create_context_auto(HDC hdc) {
 	HGLRC result = impl_create_context(hdc, shared);
 	if (!result) { result = impl_create_context_legacy(hdc, shared); }
 	return result;
-}
-
-void impl_destroy_context(HGLRC hglrc) {
-	engine_DeleteContext(hglrc);
 }
 
 //
