@@ -45,10 +45,11 @@ if defined unity_build (
 	cl -std:c11 "../project/unity_build.c" -Fe"ninety_nine.exe" %compiler% %warnings% -link %linker%
 ) else ( rem alternatively, compile a set of translation units
 	if exist "./temp/unity_build*" del ".\temp\unity_build*"
-	cl -std:c11 -c "../engine/internal/*.c"         %compiler% %warnings%
-	cl -std:c11 -c "../engine/platform_windows/*.c" %compiler% %warnings%
-	cl -std:c11 -c "../sandbox/*.c"                 %compiler% %warnings%
-	rem cl -std:c11 -c "../third_party/stb/*.c"         %compiler%
+	cl -std:c11 -c "../engine/internal/*.c"                %compiler% %warnings%
+	cl -std:c11 -c "../engine/platform_windows/*.c"        %compiler% %warnings%
+	cl -std:c11 -c "../engine/platform_windows/opengl/*.c" %compiler% %warnings%
+	cl -std:c11 -c "../sandbox/*.c"                        %compiler% %warnings%
+	rem cl -std:c11 -c "../third_party/stb/*.c"                %compiler%
 	link "./temp/*.obj" -out:"ninety_nine.exe" %linker%
 )
 

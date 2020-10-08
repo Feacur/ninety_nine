@@ -4,7 +4,7 @@
 #include "engine/api/key_codes.h"
 
 #include "api/rendering_context.h"
-#include "api/window_internal.h"
+#include "api/internal_window.h"
 
 #include <Windows.h>
 #include <hidusage.h>
@@ -74,11 +74,11 @@ bool engine_window_is_active(struct Engine_Window * window) {
 }
 
 void engine_window_init_context(struct Engine_Window * window) {
-	window->rendering_context = engine_context_create(window);
+	window->rendering_context = engine_rendering_context_create(window);
 }
 
 void engine_window_deinit_context(struct Engine_Window * window) {
-	engine_context_destroy(window->rendering_context);
+	engine_rendering_context_destroy(window->rendering_context);
 }
 
 static void engine_window_reset_input(struct Engine_Window * window) {
@@ -188,9 +188,9 @@ u16 engine_window_get_refresh_rate(struct Engine_Window * window, u16 default_va
 // system API
 //
 
-#include "api/window_system.h"
+#include "interoperations/system_window.h"
 
-void engine_window_system_init(void) {
+void engine_system__window_init(void) {
 	RegisterClassExA(&(WNDCLASSEXA){
 		.cbSize        = sizeof(WNDCLASSEXA),
 		.lpszClassName = ENGINE_WINDOW_CLASS_NAME,
@@ -201,7 +201,7 @@ void engine_window_system_init(void) {
 	});
 }
 
-void engine_window_system_deinit(void) {
+void engine_system__window_deinit(void) {
 	UnregisterClassA(ENGINE_WINDOW_CLASS_NAME, GetModuleHandleA(NULL));
 }
 
@@ -209,13 +209,13 @@ void engine_window_system_deinit(void) {
 // context API
 //
 
-#include "api/window_context.h"
+#include "interoperations/rendering_context_window.h"
 
-HWND engine_window_context_get_handle(struct Engine_Window * window) {
+HWND engine_rendering_context__window_get_handle(struct Engine_Window * window) {
 	return window->handle;
 }
 
-void engine_window_context_detach(struct Engine_Window * window) {
+void engine_rendering_context__window_detach(struct Engine_Window * window) {
 	window->rendering_context = NULL;
 }
 
@@ -524,7 +524,7 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 		case WM_DESTROY: {
 			RemovePropA(hwnd, ENGINE_WINDOW_POINTER);
 			if (impl_window_raw_input_target == hwnd) { engine_window_toggle_raw_input(window); }
-			if (window->rendering_context) { engine_context_destroy(window->rendering_context); }
+			if (window->rendering_context) { engine_rendering_context_destroy(window->rendering_context); }
 			if (window->handle == hwnd) { ENGINE_FREE(window); }
 		} return 0;
 	}

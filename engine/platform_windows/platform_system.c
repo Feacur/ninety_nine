@@ -1,8 +1,8 @@
 #include "engine/api/code.h"
 
-#include "api/time_system.h"
-#include "api/window_system.h"
-#include "api/opengl_system.h"
+#include "interoperations/system_time.h"
+#include "interoperations/system_window.h"
+#include "interoperations/system_rendering_library.h"
 
 #include <Windows.h>
 #include <signal.h>
@@ -23,9 +23,9 @@ bool engine_system_should_close;
 void engine_system_init(void) {
 	impl_set_process_dpi_awareness();
 
-	engine_time_system_init();
-	engine_window_system_init();
-	engine_opengl_system_init();
+	engine_system__time_init();
+	engine_system__window_init();
+	engine_system__rendering_library_load();
 
 	signal(SIGABRT, impl_signal_handler);
 	signal(SIGFPE,  impl_signal_handler);
@@ -36,9 +36,9 @@ void engine_system_init(void) {
 }
 
 void engine_system_deinit(void) {
-	engine_time_system_deinit();
-	engine_window_system_deinit();
-	engine_opengl_system_deinit();
+	engine_system__time_deinit();
+	engine_system__window_deinit();
+	engine_system__rendering_library_unload();
 }
 
 void engine_system_poll_events(void) {
@@ -54,9 +54,9 @@ void engine_system_poll_events(void) {
 // API internal
 //
 
-#include "api/system_internal.h"
+#include "api/internal_system.h"
 
-void engine_system_internal_log_last_error(void) {
+void engine_system__log_last_error(void) {
 	DWORD const error = GetLastError();
 	if (!error) { return; }
 

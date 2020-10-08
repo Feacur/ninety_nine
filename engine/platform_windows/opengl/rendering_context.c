@@ -3,8 +3,9 @@
 #include "engine/api/graphics_types.h"
 #include "engine/api/opengl.h"
 
-#include "api/window_context.h"
-#include "api/opengl_library_opengl_context.h"
+#include "../interoperations/rendering_context_window.h"
+#include "../interoperations/rendering.h"
+#include "../api/wgl_wrapper.h"
 
 //
 struct Settings_CTX hint_settings_ctx;
@@ -24,18 +25,18 @@ static void impl_destroy_context(HGLRC hglrc);
 // API
 //
 
-#include "api/rendering_context.h"
+#include "../api/rendering_context.h"
 
 struct Rendering_Context {
 	HGLRC handle;
 	struct Engine_Window * window;
 };
 
-struct Rendering_Context * engine_context_create(struct Engine_Window * window) {
+struct Rendering_Context * engine_rendering_context_create(struct Engine_Window * window) {
 	struct Rendering_Context * context = ENGINE_MALLOC(sizeof(*context));
 	memset(context, 0, sizeof(*context));
 
-	HWND hwnd = engine_window_context_get_handle(window);
+	HWND hwnd = engine_rendering_context__window_get_handle(window);
 	HDC  hdc  = GetDC(hwnd);
 
 	context->handle = impl_create_context_auto(hdc);
@@ -46,9 +47,9 @@ struct Rendering_Context * engine_context_create(struct Engine_Window * window) 
 	return context;
 }
 
-void engine_context_destroy(struct Rendering_Context * context) {
+void engine_rendering_context_destroy(struct Rendering_Context * context) {
 	impl_destroy_context(context->handle); context->handle = NULL;
-	engine_window_context_detach(context->window); context->window = NULL;
+	engine_rendering_context__window_detach(context->window); context->window = NULL;
 	ENGINE_FREE(context);
 }
 

@@ -49,10 +49,11 @@ if defined unity_build (
 	clang -std=c99 "../project/unity_build.c" -o"ninety_nine.exe" %compiler% %warnings% -Wl,%libs: =,% -Xlinker -subsystem:console
 ) else ( rem alternatively, compile a set of translation units
 	if exist "./temp/unity_build*" del ".\temp\unity_build*"
-	clang -std=c99 -c "../engine/internal/*.c"         %compiler% %warnings%
-	clang -std=c99 -c "../engine/platform_windows/*.c" %compiler% %warnings%
-	clang -std=c99 -c "../sandbox/*.c"                 %compiler% %warnings%
-	rem clang -std=c99 -c "../third_party/stb/*.c"         %compiler%
+	clang -std=c99 -c "../engine/internal/*.c"                %compiler% %warnings%
+	clang -std=c99 -c "../engine/platform_windows/*.c"        %compiler% %warnings%
+	clang -std=c99 -c "../engine/platform_windows/opengl/*.c" %compiler% %warnings%
+	clang -std=c99 -c "../sandbox/*.c"                        %compiler% %warnings%
+	rem clang -std=c99 -c "../third_party/stb/*.c"                %compiler%
 	move ".\*.o" ".\temp"
 	lld-link "./temp/*.o" libcmt.lib -out:"ninety_nine.exe" %linker%
 )

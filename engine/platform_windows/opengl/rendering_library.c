@@ -3,8 +3,8 @@
 #include "engine/api/graphics_types.h"
 #include "engine/api/opengl.h"
 
-#include "api/window_internal.h"
-#include "api/wgl.h"
+#include "../api/internal_window.h"
+#include "../api/wgl_wrapper.h"
 
 #include <Windows.h>
 
@@ -24,18 +24,18 @@ struct Opengl_Library {
 
 	struct {
 		// DLL
-		GetProcAddress_func GetProcAddress;
-		CreateContext_func  CreateContext;
-		DeleteContext_func  DeleteContext;
-		MakeCurrent_func    MakeCurrent;
-		ShareLists_func     ShareLists;
+		PFNWGLGETPROCADDRESSPROC GetProcAddress;
+		PFNWGLCREATECONTEXTPROC  CreateContext;
+		PFNWGLDELETECONTEXTPROC  DeleteContext;
+		PFNWGLMAKECURRENTPROC    MakeCurrent;
+		PFNWGLSHARELISTSPROC     ShareLists;
 		// ARB
-		GetExtensionsStringARB_func    GetExtensionsStringARB;
-		GetPixelFormatAttribivARB_func GetPixelFormatAttribivARB;
-		CreateContextAttribsARB_func   CreateContextAttribsARB;
+		PFNWGLGETEXTENSIONSSTRINGARBPROC    GetExtensionsStringARB;
+		PFNWGLGETPIXELFORMATATTRIBIVARBPROC GetPixelFormatAttribivARB;
+		PFNWGLCREATECONTEXTATTRIBSARBPROC   CreateContextAttribsARB;
 		// EXT
-		GetExtensionsStringEXT_func GetExtensionsStringEXT;
-		SwapIntervalEXT_func        SwapIntervalEXT;
+		PFNWGLGETEXTENSIONSSTRINGEXTPROC GetExtensionsStringEXT;
+		PFNWGLSWAPINTERVALEXTPROC        SwapIntervalEXT;
 	} wgl;
 
 	cstring extensions_ext;
@@ -50,38 +50,42 @@ static bool impl_contains_full_word(cstring container, cstring value);
 // API
 //
 
-#include "engine/api/platform_opengl_library.h"
+#include "../api/rendering_library.h"
 
-void * engine_opengl_get_function(cstring name) {
-	if (!name) { return NULL; }
+void engine_rendering_library_init(void) {
 
-	PROC ogl_address = engine_GetProcAddress(name);
-	if (ogl_address) { return (void *)ogl_address; }
-
-	FARPROC dll_address = GetProcAddress(instance->library, name);
-	if (dll_address) { return (void *)dll_address; }
-
-	return NULL;
 }
+
+// void * engine_opengl_get_function(cstring name) {
+// 	if (!name) { return NULL; }
+// 
+// 	PROC ogl_address = instance->wgl.GetProcAddress(name);
+// 	if (ogl_address) { return (void *)ogl_address; }
+// 
+// 	FARPROC dll_address = GetProcAddress(instance->library, name);
+// 	if (dll_address) { return (void *)dll_address; }
+// 
+// 	return NULL;
+// }
 
 //
 // system API
 //
 
-#include "api/opengl_system.h"
+#include "../interoperations/system_rendering_library.h"
 
-void engine_opengl_system_init(void) {
+void engine_system__rendering_library_load(void) {
 	struct Opengl_Library * opengl = ENGINE_MALLOC(sizeof(*opengl));
+	memset(opengl, 0, sizeof(*opengl));
+
 	opengl->library = LoadLibraryA(ENGINE_OPENGL_LIBRARY_NAME);
 
 	//
-	#define LOAD_FUNCTION(name) opengl->wgl.name = (name ## _func)GetProcAddress(opengl->library, "wgl" # name)
-	LOAD_FUNCTION(GetProcAddress);
-	LOAD_FUNCTION(CreateContext);
-	LOAD_FUNCTION(DeleteContext);
-	LOAD_FUNCTION(MakeCurrent);
-	LOAD_FUNCTION(ShareLists);
-	#undef LOAD_FUNCTION
+	opengl->wgl.GetProcAddress = (PFNWGLGETPROCADDRESSPROC)GetProcAddress(opengl->library, "wglGetProcAddress");
+	opengl->wgl.CreateContext  = (PFNWGLCREATECONTEXTPROC) GetProcAddress(opengl->library, "wglCreateContext");
+	opengl->wgl.DeleteContext  = (PFNWGLDELETECONTEXTPROC) GetProcAddress(opengl->library, "wglDeleteContext");
+	opengl->wgl.MakeCurrent    = (PFNWGLMAKECURRENTPROC)   GetProcAddress(opengl->library, "wglMakeCurrent");
+	opengl->wgl.ShareLists     = (PFNWGLSHARELISTSPROC)    GetProcAddress(opengl->library, "wglShareLists");
 
 	//
 	HWND hwnd = CreateWindowExA(
@@ -102,7 +106,7 @@ void engine_opengl_system_init(void) {
 	instance = opengl;
 }
 
-void engine_opengl_system_deinit(void) {
+void engine_system__rendering_library_unload(void) {
 	FreeLibrary(instance->library);
 	ENGINE_FREE(instance);
 }
@@ -111,7 +115,7 @@ void engine_opengl_system_deinit(void) {
 // context API
 //
 
-#include "api/opengl_library_opengl_context.h"
+#include "../interoperations/rendering.h"
 
 bool engine_opengl_context_has_arb(cstring name) {
 	return impl_contains_full_word(instance->extensions_arb, name);
@@ -121,17 +125,16 @@ bool engine_opengl_context_has_ext(cstring name) {
 	return impl_contains_full_word(instance->extensions_ext, name);
 }
 
-// DLL
 HGLRC engine_CreateContext(HDC hDc) { return instance->wgl.CreateContext(hDc); }
 BOOL  engine_DeleteContext(HGLRC oldContext) { return instance->wgl.DeleteContext(oldContext); }
 PROC  engine_GetProcAddress(LPCSTR lpszProc) { return instance->wgl.GetProcAddress(lpszProc); }
 BOOL  engine_MakeCurrent(HDC hDc, HGLRC newContext) { return instance->wgl.MakeCurrent(hDc, newContext); }
 BOOL  engine_ShareLists(HGLRC hrcSrvShare, HGLRC hrcSrvSource) { return instance->wgl.ShareLists(hrcSrvShare, hrcSrvSource); }
-// ARB
+
 const char * engine_GetExtensionsStringARB(HDC hdc) { return instance->wgl.GetExtensionsStringARB(hdc); }
 BOOL         engine_GetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues) { return instance->wgl.GetPixelFormatAttribivARB(hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, piValues); }
 HGLRC        engine_CreateContextAttribsARB(HDC hDC, HGLRC hShareContext, const int *attribList) { return instance->wgl.CreateContextAttribsARB(hDC, hShareContext, attribList); }
-// EXT
+
 const char * engine_GetExtensionsStringEXT(void) { return instance->wgl.GetExtensionsStringEXT(); }
 BOOL         engine_SwapIntervalEXT(int interval) { return instance->wgl.SwapIntervalEXT(interval); }
 
@@ -166,13 +169,11 @@ static void impl_handle_extensions_loading(struct Opengl_Library * opengl, HDC h
 
 	if (!opengl->wgl.MakeCurrent(hdc, hrc)) { ENGINE_DEBUG_BREAK(); }
 	else {
-		#define LOAD_FUNCTION(name) opengl->wgl.name = (name ## _func)opengl->wgl.GetProcAddress("wgl" # name)
-		LOAD_FUNCTION(GetExtensionsStringARB);
-		LOAD_FUNCTION(GetPixelFormatAttribivARB);
-		LOAD_FUNCTION(CreateContextAttribsARB);
-		LOAD_FUNCTION(GetExtensionsStringEXT);
-		LOAD_FUNCTION(SwapIntervalEXT);
-		#undef LOAD_FUNCTION
+		opengl->wgl.GetExtensionsStringARB    = (PFNWGLGETEXTENSIONSSTRINGARBPROC)   opengl->wgl.GetProcAddress("wglGetExtensionsStringARB");
+		opengl->wgl.GetPixelFormatAttribivARB = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC)opengl->wgl.GetProcAddress("wglGetPixelFormatAttribivARB");
+		opengl->wgl.CreateContextAttribsARB   = (PFNWGLCREATECONTEXTATTRIBSARBPROC)  opengl->wgl.GetProcAddress("wglCreateContextAttribsARB");
+		opengl->wgl.GetExtensionsStringEXT    = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)   opengl->wgl.GetProcAddress("wglGetExtensionsStringEXT");
+		opengl->wgl.SwapIntervalEXT           = (PFNWGLSWAPINTERVALEXTPROC)          opengl->wgl.GetProcAddress("wglSwapIntervalEXT");
 
 		opengl->extensions_ext = opengl->wgl.GetExtensionsStringEXT();
 		opengl->extensions_arb = opengl->wgl.GetExtensionsStringARB(hdc);
