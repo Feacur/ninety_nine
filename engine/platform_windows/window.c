@@ -2,7 +2,8 @@
 #include "engine/api/maths.h"
 #include "engine/api/math_types.h"
 #include "engine/api/key_codes.h"
-#include "api/context.h"
+
+#include "api/rendering_context.h"
 #include "api/window_internal.h"
 
 #include <Windows.h>

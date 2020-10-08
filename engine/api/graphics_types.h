@@ -3,9 +3,10 @@
 
 struct Settings_CTX {
 	int version;
-	int buffering;
+	int buffering, swap_method;
 	int r, g, b, a;
 	int depth, stencil;
+	int samples, sample_buffers;
 };
 
 extern struct Settings_CTX hint_settings_ctx;

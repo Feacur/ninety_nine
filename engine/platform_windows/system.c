@@ -1,7 +1,8 @@
 #include "engine/api/code.h"
-#include "engine/api/platform_opengl.h"
+
 #include "api/time_system.h"
 #include "api/window_system.h"
+#include "api/opengl_system.h"
 
 #include <Windows.h>
 #include <signal.h>

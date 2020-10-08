@@ -9,9 +9,17 @@
 
 int main(int argc, char * argv[]) {
 	(void)argc; (void)argv;
-	engine_system_init();
-	//
 
+	//
+	hint_settings_ctx = (struct Settings_CTX){
+		.version = 46,
+		.buffering = true, .swap_method = 1,
+		.r = 8, .g = 8, .b = 8, .a = 8,
+		.depth = 24, .stencil = 8,
+	};
+	engine_system_init();
+
+	//
 	u8 * buffer = NULL; size_t buffer_size = 0;
 	engine_file_read("assets/settings.cfg", &buffer, &buffer_size);
 	printf("%.*s\n", (u32)buffer_size, buffer);
@@ -21,13 +29,6 @@ int main(int argc, char * argv[]) {
 	free(buffer);
 
 	//
-	hint_settings_ctx = (struct Settings_CTX){
-		.version = 46,
-		.buffering = true,
-		.r = 8, .g = 8, .b = 8, .a = 8,
-		.depth = 24, .stencil = 8,
-	};
-
 	u64 start_ticks = engine_time_get_ticks();
 	struct Engine_Window * window = engine_window_create();
 	engine_window_init_context(window);
