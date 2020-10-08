@@ -10,14 +10,13 @@
 
 //
 struct Settings_CTX hint_settings_ctx;
-struct OpenGL * gl;
 
 struct Pixel_Format {
 	struct Settings_CTX settings;
 	int id;
 };
 
-static HGLRC impl_create_context_auto(HDC hdc);
+static HGLRC impl_create_context_auto(HDC hdc, struct Pixel_Format * format);
 
 #define HAS_ARB(name) engine_has_arb(# name)
 // #define HAS_EXT(name) engine_has_ext(# name)
@@ -30,7 +29,7 @@ static HGLRC impl_create_context_auto(HDC hdc);
 
 struct Rendering_Context {
 	HGLRC handle;
-	struct OpenGL gl;
+	struct Pixel_Format format;
 	struct Engine_Window * window;
 	HDC cached_device;
 };
@@ -41,45 +40,32 @@ struct Rendering_Context * engine_rendering_context_create(struct Engine_Window 
 	context->window = window;
 
 	HWND hwnd = engine_rendering_context__window_get_handle(window);
-	HDC  hdc  = GetDC(hwnd);
+	context->cached_device = GetDC(hwnd);
 
-	context->handle = impl_create_context_auto(hdc);
-	engine_MakeCurrent(hdc, context->handle);
+	context->handle = impl_create_context_auto(context->cached_device, &context->format);
+	engine_MakeCurrent(context->cached_device, context->handle);
 
-	context->gl = engine_load_functions();
-
-	engine_MakeCurrent(NULL, NULL);
-	ReleaseDC(hwnd, hdc);
+	engine_load_functions();
 
 	return context;
 }
 
 void engine_rendering_context_destroy(struct Rendering_Context * context) {
-	engine_rendering_context_release(context);
-	engine_rendering_context__window_detach(context->window);
-	engine_DeleteContext(context->handle);
-	ENGINE_FREE(context);
-}
-
-void engine_rendering_context_aquire(struct Rendering_Context * context) {
-	if (context->cached_device) { return; }
-
-	HWND hwnd = engine_rendering_context__window_get_handle(context->window);
-	context->cached_device = GetDC(hwnd);
-
-	engine_MakeCurrent(context->cached_device, context->handle);
-	gl = &context->gl;
-}
-
-void engine_rendering_context_release(struct Rendering_Context * context) {
-	if (!context->cached_device) { return; }
-
-	gl = NULL;
 	engine_MakeCurrent(NULL, NULL);
+	engine_DeleteContext(context->handle);
 
 	HWND hwnd = engine_rendering_context__window_get_handle(context->window);
 	ReleaseDC(hwnd, context->cached_device);
-	context->cached_device = NULL;
+
+	engine_rendering_context__window_detach(context->window);
+	ENGINE_FREE(context);
+}
+
+void engine_rendering_context_update(struct Rendering_Context * context) {
+	if (!context->format.settings.buffering || !SwapBuffers(context->cached_device)) {
+		// glFinish();
+		glFlush();
+	}
 }
 
 //
@@ -221,7 +207,7 @@ static struct Pixel_Format * impl_allocate_pixel_formats_legacy(HDC hdc) {
 	return formats;
 }
 
-static int impl_choose_pixel_format(struct Pixel_Format const * formats) {
+static struct Pixel_Format impl_choose_pixel_format(struct Pixel_Format const * formats) {
 	struct Pixel_Format const * format = formats;
 	for (; format->id; ++format) {
 		if (format->settings.r       < hint_settings_ctx.r)       { continue; }
@@ -241,7 +227,7 @@ static int impl_choose_pixel_format(struct Pixel_Format const * formats) {
 
 		break;
 	}
-	return format->id;
+	return *format;
 }
 
 static HGLRC impl_create_context(HDC hdc, HGLRC shared) {
@@ -324,24 +310,26 @@ static HGLRC impl_create_context_legacy(HDC hdc, HGLRC shared) {
 	return result;
 }
 
-static HGLRC impl_create_context_auto(HDC hdc) {
+static HGLRC impl_create_context_auto(HDC hdc, struct Pixel_Format * format) {
 	HGLRC const shared = NULL;
 
 	struct Pixel_Format * formats = impl_allocate_pixel_formats(hdc);
 	if (!formats) { formats = impl_allocate_pixel_formats_legacy(hdc); }
 
-	int pfd_id = impl_choose_pixel_format(formats);
-	if (!pfd_id) { ENGINE_DEBUG_BREAK(); return NULL; }
+	struct Pixel_Format pixel_format = impl_choose_pixel_format(formats);
+	if (!pixel_format.id) { ENGINE_DEBUG_BREAK(); return NULL; }
 
 	PIXELFORMATDESCRIPTOR pfd;
-	int formats_count = DescribePixelFormat(hdc, pfd_id, sizeof(pfd), &pfd);
+	int formats_count = DescribePixelFormat(hdc, pixel_format.id, sizeof(pfd), &pfd);
 	if (!formats_count) { ENGINE_DEBUG_BREAK(); return NULL; }
 
-	BOOL pfd_found = SetPixelFormat(hdc, pfd_id, &pfd);
+	BOOL pfd_found = SetPixelFormat(hdc, pixel_format.id, &pfd);
 	if (!pfd_found) { ENGINE_DEBUG_BREAK(); return NULL; }
 
 	HGLRC result = impl_create_context(hdc, shared);
 	if (!result) { result = impl_create_context_legacy(hdc, shared); }
+
+	*format = pixel_format;
 	return result;
 }
 

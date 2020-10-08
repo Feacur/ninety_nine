@@ -90,6 +90,7 @@ static void engine_window_reset_input(struct Engine_Window * window) {
 
 void engine_window_update(struct Engine_Window * window) {
 	engine_window_reset_input(window);
+	engine_rendering_context_update(window->rendering_context);
 }
 
 svec2 engine_window_mouse_delta(struct Engine_Window * window) {

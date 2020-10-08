@@ -16,10 +16,10 @@
 #pragma clang diagnostic pop
 #endif
 
-struct OpenGL {
-	PFNGLGETINTEGERVPROC GetIntegerv;
-	PFNGLGETSTRINGIPROC  GetStringi;
-};
-extern struct OpenGL * gl;
+extern PFNGLGETINTEGERVPROC glGetIntegerv;
+extern PFNGLGETSTRINGIPROC  glGetStringi;
+
+extern PFNGLFINISHPROC glFinish;
+extern PFNGLFLUSHPROC  glFlush;
 
 #endif // ENGINE_OPENGL

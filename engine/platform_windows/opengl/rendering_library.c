@@ -107,11 +107,9 @@ void engine_system__rendering_library_unload(void) {
 
 #include "library_context.h"
 
-struct OpenGL engine_load_functions(void) {
-	return (struct OpenGL){
-		.GetIntegerv = (PFNGLGETINTEGERVPROC)impl_get_function("glGetIntegerv"),
-		.GetStringi  = (PFNGLGETSTRINGIPROC) impl_get_function("glGetStringi"),
-	};
+void engine_load_functions(void) {
+	glGetIntegerv = (PFNGLGETINTEGERVPROC)impl_get_function("glGetIntegerv");
+	glGetStringi  = (PFNGLGETSTRINGIPROC) impl_get_function("glGetStringi");
 }
 
 bool engine_has_arb(cstring name) {
@@ -161,10 +159,10 @@ static void impl_handle_extensions_loading(struct Rendering_Library * rendering_
 	BOOL pfd_found = SetPixelFormat(hdc, pfd_id, &pfd);
 	if (!pfd_found) { ENGINE_DEBUG_BREAK(); return; }
 
-	HGLRC hrc = rendering_library->wgl.CreateContext(hdc);
-	if (!hrc) { ENGINE_DEBUG_BREAK(); return; }
+	HGLRC hglrc = rendering_library->wgl.CreateContext(hdc);
+	if (!hglrc) { ENGINE_DEBUG_BREAK(); return; }
 
-	if (!rendering_library->wgl.MakeCurrent(hdc, hrc)) { ENGINE_DEBUG_BREAK(); }
+	if (!rendering_library->wgl.MakeCurrent(hdc, hglrc)) { ENGINE_DEBUG_BREAK(); }
 	else {
 		rendering_library->wgl.GetExtensionsStringARB    = (PFNWGLGETEXTENSIONSSTRINGARBPROC)   rendering_library->wgl.GetProcAddress("wglGetExtensionsStringARB");
 		rendering_library->wgl.GetPixelFormatAttribivARB = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC)rendering_library->wgl.GetProcAddress("wglGetPixelFormatAttribivARB");
@@ -177,7 +175,7 @@ static void impl_handle_extensions_loading(struct Rendering_Library * rendering_
 	}
 
 	rendering_library->wgl.MakeCurrent(NULL, NULL);
-	rendering_library->wgl.DeleteContext(hrc);
+	rendering_library->wgl.DeleteContext(hglrc);
 }
 
 //

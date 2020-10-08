@@ -36,6 +36,7 @@ int main(int argc, char * argv[]) {
 		// update OS
 		engine_window_update(window);
 		engine_system_poll_events();
+		if (!engine_window_is_active(window)) { break; }
 
 		// wait the frame ends
 		u16 refresh_rate = engine_window_get_refresh_rate(window, 144);

@@ -5,7 +5,7 @@
 #include "engine/api/opengl.h"
 #include <Windows.h>
 
-struct OpenGL engine_load_functions(void);
+void engine_load_functions(void);
 
 bool engine_has_arb(cstring name);
 bool engine_has_ext(cstring name);

@@ -6,7 +6,6 @@ struct Engine_Window;
 struct Rendering_Context;
 struct Rendering_Context * engine_rendering_context_create(struct Engine_Window * window);
 void engine_rendering_context_destroy(struct Rendering_Context * context);
-void engine_rendering_context_aquire(struct Rendering_Context * context);
-void engine_rendering_context_release(struct Rendering_Context * context);
+void engine_rendering_context_update(struct Rendering_Context * context);
 
 #endif // ENGINE_RENDERING_CONTEXT
