@@ -4,8 +4,8 @@
 #include "engine/api/types.h"
 #include <Windows.h>
 
-bool engine_opengl_context_has_arb(cstring name);
-bool engine_opengl_context_has_ext(cstring name);
+bool engine_has_arb(cstring name);
+bool engine_has_ext(cstring name);
 
 HGLRC engine_CreateContext(HDC hDc);
 BOOL  engine_DeleteContext(HGLRC oldContext);

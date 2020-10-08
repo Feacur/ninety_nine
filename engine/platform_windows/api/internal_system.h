@@ -1,6 +1,6 @@
-#if !defined(ENGINE_SYSTEM_INTERNAL)
-#define ENGINE_SYSTEM_INTERNAL
+#if !defined(ENGINE_INTERNAL_SYSTEM)
+#define ENGINE_INTERNAL_SYSTEM
 
 void engine_system__log_last_error(void);
 
-#endif // ENGINE_SYSTEM_INTERNAL
+#endif // ENGINE_INTERNAL_SYSTEM

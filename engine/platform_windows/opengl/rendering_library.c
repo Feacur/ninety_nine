@@ -4,9 +4,8 @@
 #include "engine/api/opengl.h"
 
 #include "../api/internal_window.h"
-#include "../api/wgl_wrapper.h"
 
-#include <Windows.h>
+#include "wgl_wrapper.h"
 
 // https://www.khronos.org/opengl/wiki/Load_OpenGL_Functions
 // https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)
@@ -72,7 +71,7 @@ void engine_rendering_library_init(void) {
 // system API
 //
 
-#include "../interoperations/system_rendering_library.h"
+#include "../interoperations/system__rendering_library.h"
 
 void engine_system__rendering_library_load(void) {
 	struct Opengl_Library * opengl = ENGINE_MALLOC(sizeof(*opengl));
@@ -115,13 +114,13 @@ void engine_system__rendering_library_unload(void) {
 // context API
 //
 
-#include "../interoperations/rendering.h"
+#include "library_context.h"
 
-bool engine_opengl_context_has_arb(cstring name) {
+bool engine_has_arb(cstring name) {
 	return impl_contains_full_word(instance->extensions_arb, name);
 }
 
-bool engine_opengl_context_has_ext(cstring name) {
+bool engine_has_ext(cstring name) {
 	return impl_contains_full_word(instance->extensions_ext, name);
 }
 

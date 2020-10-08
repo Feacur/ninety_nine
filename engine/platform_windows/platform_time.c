@@ -49,7 +49,7 @@ void engine_time_wait_sleep(u64 start_ticks, u64 duration, u64 precision) {
 // system API
 //
 
-#include "interoperations/system_time.h"
+#include "interoperations/system__time.h"
 
 void engine_system__time_init(void) {
 	LARGE_INTEGER performance_frequency;

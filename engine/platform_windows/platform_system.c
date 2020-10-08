@@ -1,8 +1,8 @@
 #include "engine/api/code.h"
 
-#include "interoperations/system_time.h"
-#include "interoperations/system_window.h"
-#include "interoperations/system_rendering_library.h"
+#include "interoperations/system__time.h"
+#include "interoperations/system__window.h"
+#include "interoperations/system__rendering_library.h"
 
 #include <Windows.h>
 #include <signal.h>

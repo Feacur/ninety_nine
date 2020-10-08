@@ -3,9 +3,10 @@
 #include "engine/api/graphics_types.h"
 #include "engine/api/opengl.h"
 
-#include "../interoperations/rendering_context_window.h"
-#include "../interoperations/rendering.h"
-#include "../api/wgl_wrapper.h"
+#include "../interoperations/rendering_context__window.h"
+
+#include "library_context.h"
+#include "wgl_wrapper.h"
 
 //
 struct Settings_CTX hint_settings_ctx;
@@ -18,8 +19,8 @@ struct Pixel_Format {
 static HGLRC impl_create_context_auto(HDC hdc);
 static void impl_destroy_context(HGLRC hglrc);
 
-#define HAS_ARB(name) engine_opengl_context_has_arb(# name)
-// #define HAS_EXT(name) engine_opengl_context_has_ext(# name)
+#define HAS_ARB(name) engine_has_arb(# name)
+// #define HAS_EXT(name) engine_has_ext(# name)
 
 //
 // API

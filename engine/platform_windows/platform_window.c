@@ -188,7 +188,7 @@ u16 engine_window_get_refresh_rate(struct Engine_Window * window, u16 default_va
 // system API
 //
 
-#include "interoperations/system_window.h"
+#include "interoperations/system__window.h"
 
 void engine_system__window_init(void) {
 	RegisterClassExA(&(WNDCLASSEXA){
@@ -209,7 +209,7 @@ void engine_system__window_deinit(void) {
 // context API
 //
 
-#include "interoperations/rendering_context_window.h"
+#include "interoperations/rendering_context__window.h"
 
 HWND engine_rendering_context__window_get_handle(struct Engine_Window * window) {
 	return window->handle;
