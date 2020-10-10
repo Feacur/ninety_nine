@@ -59,7 +59,7 @@ struct Engine_Window * engine_window_create(void) {
 
 	RECT window_rect;
 	GetClientRect(window->handle, &window_rect);
-	window->size = (svec2){window_rect.right - window_rect.left, window_rect.bottom - window_rect.top};
+	window->size = svec2_set(window_rect.right - window_rect.left, window_rect.bottom - window_rect.top);
 
 	return window;
 }
@@ -84,8 +84,8 @@ void engine_window_deinit_context(struct Engine_Window * window) {
 static void engine_window_reset_input(struct Engine_Window * window) {
 	memcpy(window->mouse.prev,    window->mouse.keys,    sizeof(window->mouse.keys));
 	memcpy(window->keyboard.prev, window->keyboard.keys, sizeof(window->keyboard.keys));
-	window->mouse.delta = (svec2){0, 0};
-	window->mouse.wheel = (vec2){0, 0};
+	window->mouse.delta = svec2_set(0, 0);
+	window->mouse.wheel = vec2_set(0, 0);
 }
 
 void engine_window_update(struct Engine_Window * window) {
@@ -297,31 +297,28 @@ static void raw_input_callback_mouse(struct Engine_Window * window, RAWMOUSE * d
 			.x = mul_div_s32(data->lLastX, width,  UINT16_MAX),
 			.y = mul_div_s32(data->lLastY, height, UINT16_MAX),
 		};
-		window->mouse.display_position = (svec2){position.x, position.y};
+		window->mouse.display_position = svec2_set(position.x, position.y);
 		window->mouse.display_position.y = height - (window->mouse.display_position.y + 1);
 	
 		ScreenToClient(window->handle, &position);
-		window->mouse.window_position = (svec2){position.x, position.y};
+		window->mouse.window_position = svec2_set(position.x, position.y);
 		window->mouse.window_position.y = window->size.y - (window->mouse.window_position.y + 1);
 
-		svec2 delta = (svec2){
-			window->mouse.display_position.x - previous_display_position.x,
-			window->mouse.display_position.y - previous_display_position.y,
-		};
+		svec2 delta = svec2_sub(window->mouse.display_position, previous_display_position);
 		window->mouse.delta.x += delta.x;
 		window->mouse.delta.y += delta.y;
 	}
 	else if (data->lLastX != 0 || data->lLastY != 0) {
 		POINT position;
 		GetCursorPos(&position);
-		window->mouse.display_position = (svec2){position.x, position.y};
+		window->mouse.display_position = svec2_set(position.x, position.y);
 		window->mouse.display_position.y = height - (window->mouse.display_position.y + 1);
 
 		ScreenToClient(window->handle, &position);
-		window->mouse.window_position = (svec2){position.x, position.y};
+		window->mouse.window_position = svec2_set(position.x, position.y);
 		window->mouse.window_position.y  = window->size.y - (window->mouse.window_position.y + 1);
 
-		svec2 delta = (svec2){data->lLastX, -data->lLastY};
+		svec2 delta = svec2_set(data->lLastX, -data->lLastY);
 		window->mouse.delta.x += delta.x;
 		window->mouse.delta.y += delta.y;
 	}
@@ -421,16 +418,13 @@ static void impl_process_message_mouse(struct Engine_Window * window, WPARAM wPa
 
 	svec2 const previous_display_position = window->mouse.display_position;
 
-	window->mouse.display_position = (svec2){screen.x, screen.y};
+	window->mouse.display_position = svec2_set(screen.x, screen.y);
 	window->mouse.display_position.y = height - (window->mouse.display_position.y + 1);
 
-	window->mouse.window_position = (svec2){client.x, client.y};
+	window->mouse.window_position = svec2_set(client.x, client.y);
 	window->mouse.window_position.y = window->size.y - (window->mouse.window_position.y + 1);
 
-	svec2 delta = (svec2){
-		window->mouse.display_position.x - previous_display_position.x,
-		window->mouse.display_position.y - previous_display_position.y,
-	};
+	svec2 delta = svec2_sub(window->mouse.display_position, previous_display_position);
 	window->mouse.delta.x += delta.x;
 	window->mouse.delta.y += delta.y;
 
@@ -482,15 +476,15 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 		case WM_RBUTTONUP:
 		case WM_XBUTTONDOWN:
 		case WM_XBUTTONUP: {
-			impl_process_message_mouse(window, wParam, lParam, true, (vec2){0, 0});
+			impl_process_message_mouse(window, wParam, lParam, true, vec2_set(0, 0));
 		} return 0;
 
 		case WM_MOUSEWHEEL: {
-			impl_process_message_mouse(window, wParam, lParam, false, (vec2){0, 1});
+			impl_process_message_mouse(window, wParam, lParam, false, vec2_set(0, 1));
 		} return 0;
 		
 		case WM_MOUSEHWHEEL: {
-			impl_process_message_mouse(window, wParam, lParam, false, (vec2){1, 0});
+			impl_process_message_mouse(window, wParam, lParam, false, vec2_set(1, 0));
 		} return 0;
 
 		case WM_SYSKEYUP:
@@ -506,7 +500,7 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 		} return 0;
 
 		case WM_SIZE: {
-			window->size = (svec2){LOWORD(lParam), HIWORD(lParam)};
+			window->size = svec2_set(LOWORD(lParam), HIWORD(lParam));
 			switch (wParam) {
 				case SIZE_MINIMIZED: break;
 				case SIZE_MAXIMIZED: break;
