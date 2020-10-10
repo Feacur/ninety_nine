@@ -1,7 +1,4 @@
 #include "engine/api/opengl.h"
 
-PFNGLGETINTEGERVPROC glGetIntegerv;
-PFNGLGETSTRINGIPROC  glGetStringi;
-
-PFNGLFINISHPROC glFinish;
-PFNGLFLUSHPROC  glFlush;
+#define REGISTRY_OPENGL(type, name) type gl ## name;
+#include "engine/registry/opengl.h"

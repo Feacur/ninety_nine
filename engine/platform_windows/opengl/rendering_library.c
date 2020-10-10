@@ -108,8 +108,8 @@ void engine_system__rendering_library_unload(void) {
 #include "library_context.h"
 
 void engine_load_functions(void) {
-	glGetIntegerv = (PFNGLGETINTEGERVPROC)impl_get_function("glGetIntegerv");
-	glGetStringi  = (PFNGLGETSTRINGIPROC) impl_get_function("glGetStringi");
+	#define REGISTRY_OPENGL(type, name) gl ## name = (type)impl_get_function("gl" # name);
+	#include "engine/registry/opengl.h"
 }
 
 bool engine_has_arb(cstring name) {

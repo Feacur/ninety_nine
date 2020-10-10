@@ -16,10 +16,7 @@
 #pragma clang diagnostic pop
 #endif
 
-extern PFNGLGETINTEGERVPROC glGetIntegerv;
-extern PFNGLGETSTRINGIPROC  glGetStringi;
-
-extern PFNGLFINISHPROC glFinish;
-extern PFNGLFLUSHPROC  glFlush;
+#define REGISTRY_OPENGL(type, name) extern type gl ## name;
+#include "engine/registry/opengl.h"
 
 #endif // ENGINE_OPENGL
