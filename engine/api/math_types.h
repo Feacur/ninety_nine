@@ -42,4 +42,17 @@ typedef vec4 quat;
 #define CPLX(x, y) (cplx){x, y}
 #define QUAT(x, y, z, w) (cplx){x, y, z, w}
 
+//
+#define VEC2_SINGLE(v) (vec2){v, v}
+#define VEC3_SINGLE(v) (vec3){v, v, v}
+#define VEC4_SINGLE(v) (vec4){v, v, v, v}
+
+#define SVEC2_SINGLE(v) (svec2){v, v}
+#define SVEC3_SINGLE(v) (svec3){v, v, v}
+#define SVEC4_SINGLE(v) (svec4){v, v, v, v}
+
+#define UVEC2_SINGLE(v) (uvec2){v, v}
+#define UVEC3_SINGLE(v) (uvec3){v, v, v}
+#define UVEC4_SINGLE(v) (uvec4){v, v, v, v}
+
 #endif // ENGINE_MATH_TYPES
