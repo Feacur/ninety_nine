@@ -166,21 +166,25 @@ vec3 quat_transform(quat q, vec3 v) {
 
 /*
 > parameters
-- XYZ: world space
-- XYZ': normalized space
+- XYZ: world space vector
+- ncp: world space near clipping plane
+- fcp: world space far clipping plane
+- XYZ': normalized space vector
+- NNCP: normalized space near clipping plane
+- NFCP: normalized space far clipping plane
 
 > orthograhic
-- XYZ' = (offset_z + scale_z * XYZ) / 1
-- XY scale: from [-bounds .. bounds] to [-1 .. 1]
-- Z  scale: from [Znear .. Zfar]     to [NCP .. 1]
+- XYZ' = (offset + scale * XYZ) / 1
+- XY scale: from [-scale_xy .. scale_xy] to [-1 .. 1]
+- Z  scale: from [ncp .. fcp]            to [NNCP .. 1]
 
 > perspective
-- XYZ' = (offset_z + scale_z * XYZ) / Z
-- XY scale; from [-bounds .. bounds] to [-1 .. 1]
-- Z  scale; from [Znear .. Zfar]     to [NCP .. 1]
+- XYZ' = (offset + scale * XYZ) / Z
+- XY scale; from [-scale_xy .. scale_xy] to [-1 .. 1]
+- Z  scale; from [ncp .. fcp]            to [NNCP .. 1]
 */
 
-mat4 mat4_projection(vec2 scale, r32 ncp, r32 fcp, r32 ortho) {
+mat4 mat4_projection(vec2 scale_xy, r32 ncp, r32 fcp, r32 ortho) {
 	r32 const NNCP = 0; // r32 const NFCP = 1;
 	r32 const reverse_depth = 1 / (fcp - ncp);
 
@@ -196,9 +200,9 @@ mat4 mat4_projection(vec2 scale, r32 ncp, r32 fcp, r32 ortho) {
 	r32 const ww = ortho;
 
 	return (mat4){
-		{scale.x, 0, 0,  0},
-		{0, scale.y, 0,  0},
-		{0, 0, scale_z,  zw},
-		{0, 0, offset_z, ww},
+		{scale_xy.x, 0,          0,        0},
+		{0,          scale_xy.y, 0,        0},
+		{0,          0,          scale_z,  zw},
+		{0,          0,          offset_z, ww},
 	};
 }
