@@ -3,8 +3,6 @@
 
 #include <math.h>
 
-
-
 s32 mul_div_s32(s32 value, s32 numerator, s32 denominator) {
 	s32 a = value / denominator; s32 b = value % denominator;
 	return a * numerator + b * numerator / denominator;
@@ -29,7 +27,46 @@ r32 clamp_r32(r32 v, r32 low, r32 high) { return min_r32(max_r32(v, low), high);
 s32 clamp_s32(s32 v, s32 low, s32 high) { return min_s32(max_s32(v, low), high); }
 u32 clamp_u32(u32 v, u32 low, u32 high) { return min_u32(max_u32(v, low), high); }
 
+// vec2
+
 /*
+2D
+left-handed coordinate system
+
+> generic vector multiplication
+result = (x1 + y1 * i) * (x2 + y2 * i)
+result = x1*x2      + x1*y2*( i)
+       + y1*x2*(i ) + y1*y2*(ii)
+
+> real number
+ii = 1 = cos(0)
+
+> complex number
+ii = -1 = cos(90 + 90)
+*/
+
+vec2 vec2_add(vec2 v1, vec2 v2) { return (vec2){v1.x + v2.x, v1.y + v2.y}; }
+vec2 vec2_sub(vec2 v1, vec2 v2) { return (vec2){v1.x - v2.x, v1.y - v2.y}; }
+vec2 vec2_mul(vec2 v1, vec2 v2) { return (vec2){v1.x * v2.x, v1.y * v2.y}; }
+vec2 vec2_div(vec2 v1, vec2 v2) { return (vec2){v1.x / v2.x, v1.y / v2.y}; }
+r32 vec2_dot(vec2 v1, vec2 v2) { return v1.x * v2.x + v1.y * v2.y; }
+
+svec2 svec2_add(svec2 v1, svec2 v2) { return (svec2){v1.x + v2.x, v1.y + v2.y}; }
+svec2 svec2_sub(svec2 v1, svec2 v2) { return (svec2){v1.x - v2.x, v1.y - v2.y}; }
+svec2 svec2_mul(svec2 v1, svec2 v2) { return (svec2){v1.x * v2.x, v1.y * v2.y}; }
+svec2 svec2_div(svec2 v1, svec2 v2) { return (svec2){v1.x / v2.x, v1.y / v2.y}; }
+s32 svec2_dot(svec2 v1, svec2 v2) { return v1.x * v2.x + v1.y * v2.y; }
+
+uvec2 uvec2_add(uvec2 v1, uvec2 v2) { return (uvec2){v1.x + v2.x, v1.y + v2.y}; }
+uvec2 uvec2_sub(uvec2 v1, uvec2 v2) { return (uvec2){v1.x - v2.x, v1.y - v2.y}; }
+uvec2 uvec2_mul(uvec2 v1, uvec2 v2) { return (uvec2){v1.x * v2.x, v1.y * v2.y}; }
+uvec2 uvec2_div(uvec2 v1, uvec2 v2) { return (uvec2){v1.x / v2.x, v1.y / v2.y}; }
+u32 uvec2_dot(uvec2 v1, uvec2 v2) { return v1.x * v2.x + v1.y * v2.y; }
+
+// vec3
+
+/*
+3D, 4D
 left-handed coordinate system
 
 > basis vectors multiplication
@@ -51,29 +88,9 @@ ii = jj = kk = ijk =  0 == sin(0)
 ii = jj = kk = ijk =  1 == cos(0)
 
 > quaternion
-ii = jj = kk = ijk = -1 == cos(180)
+ii = jj = kk = ijk = -1 == cos(90 + 90)
 */
 
-// vec2
-vec2 vec2_add(vec2 v1, vec2 v2) { return (vec2){v1.x + v2.x, v1.y + v2.y}; }
-vec2 vec2_sub(vec2 v1, vec2 v2) { return (vec2){v1.x - v2.x, v1.y - v2.y}; }
-vec2 vec2_mul(vec2 v1, vec2 v2) { return (vec2){v1.x * v2.x, v1.y * v2.y}; }
-vec2 vec2_div(vec2 v1, vec2 v2) { return (vec2){v1.x / v2.x, v1.y / v2.y}; }
-r32 vec2_dot(vec2 v1, vec2 v2) { return v1.x * v2.x + v1.y * v2.y; }
-
-svec2 svec2_add(svec2 v1, svec2 v2) { return (svec2){v1.x + v2.x, v1.y + v2.y}; }
-svec2 svec2_sub(svec2 v1, svec2 v2) { return (svec2){v1.x - v2.x, v1.y - v2.y}; }
-svec2 svec2_mul(svec2 v1, svec2 v2) { return (svec2){v1.x * v2.x, v1.y * v2.y}; }
-svec2 svec2_div(svec2 v1, svec2 v2) { return (svec2){v1.x / v2.x, v1.y / v2.y}; }
-s32 svec2_dot(svec2 v1, svec2 v2) { return v1.x * v2.x + v1.y * v2.y; }
-
-uvec2 uvec2_add(uvec2 v1, uvec2 v2) { return (uvec2){v1.x + v2.x, v1.y + v2.y}; }
-uvec2 uvec2_sub(uvec2 v1, uvec2 v2) { return (uvec2){v1.x - v2.x, v1.y - v2.y}; }
-uvec2 uvec2_mul(uvec2 v1, uvec2 v2) { return (uvec2){v1.x * v2.x, v1.y * v2.y}; }
-uvec2 uvec2_div(uvec2 v1, uvec2 v2) { return (uvec2){v1.x / v2.x, v1.y / v2.y}; }
-u32 uvec2_dot(uvec2 v1, uvec2 v2) { return v1.x * v2.x + v1.y * v2.y; }
-
-// vec3
 vec3 vec3_add(vec3 v1, vec3 v2) { return (vec3){v1.x + v2.x, v1.y + v2.y, v1.z + v2.z}; }
 vec3 vec3_sub(vec3 v1, vec3 v2) { return (vec3){v1.x - v2.x, v1.y - v2.y, v1.z - v2.z}; }
 vec3 vec3_mul(vec3 v1, vec3 v2) { return (vec3){v1.x * v2.x, v1.y * v2.y, v1.z * v2.z}; }
@@ -111,6 +128,25 @@ uvec4 uvec4_mul(uvec4 v1, uvec4 v2) { return (uvec4){v1.x * v2.x, v1.y * v2.y, v
 uvec4 uvec4_div(uvec4 v1, uvec4 v2) { return (uvec4){v1.x / v2.x, v1.y / v2.y, v1.z / v2.z, v1.w / v2.w}; }
 u32 uvec4_dot(uvec4 v1, uvec4 v2) { return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z + v1.w * v2.w; }
 
+// complex number
+cplx cplx_set_radians(r32 radians) { return (cplx){cosf(radians), sinf(radians)}; }
+
+// if `с` is normalized, then `cplx_reciprocal` is equivalent to `cplx_conjugate`
+cplx cplx_conjugate(cplx c) { return (cplx){c.x, -c.y}; }
+cplx cplx_reciprocal(cplx c) {
+	r32 ms = vec2_dot(c, c);
+	return vec2_div(cplx_conjugate(c), VEC2_SINGLE(ms));
+}
+
+cplx cplx_mul(cplx c1, cplx c2) {
+	return (cplx){
+		c1.x*c2.x - c1.y*c2.y,
+		c1.x*c2.y + c1.y*c2.x,
+	};
+}
+
+r32 cplx_get_radians(cplx c) { return atan2f(c.y, c.x); }
+
 // vec3, cross product
 vec3 vec3_cross(vec3 v1, vec3 v2) {
 	return (vec3){
@@ -147,6 +183,8 @@ quat quat_set_radians(vec3 radians) {
 	};
 }
 
+
+// if `q` is normalized, then `quat_reciprocal` is equivalent to `quat_conjugate`
 quat quat_conjugate(quat q) { return (quat){-q.x, -q.y, -q.z, q.w}; }
 quat quat_reciprocal(quat q) {
 	r32 ms = vec4_dot(q, q);
@@ -164,13 +202,12 @@ quat quat_mul(quat q1, quat q2) {
 
 vec3 quat_transform(quat q, vec3 v) {
 	// > result = q * QUAT(v.x, v.y, v.z, 0) * quat_reciprocal(q)
-	// if `q` is normalized, then `quat_reciprocal` is equivalent to `quat_conjugate`
 	r32 const xx = q.x*q.x; r32 const yy = q.y*q.y; r32 const zz = q.z*q.z; r32 const ww = q.w*q.w;
 	r32 const xy = q.x*q.y; r32 const yz = q.y*q.z; r32 const zw = q.z*q.w; r32 const wx = q.w*q.x;
 	r32 const xz = q.x*q.z; r32 const yw = q.y*q.w;
 	return (vec3){
 		v.x * ( xx - yy - zz + ww) + (v.y * (xy - zw) + v.z * (yw + xz)) * 2,
-		v.y * (-xx + yy - zz + ww) + (v.x * (zw + xy) + v.z * (yz - wx)) * 2,
+		v.y * (-xx + yy - zz + ww) + (v.z * (yz - wx) + v.x * (zw + xy)) * 2,
 		v.z * (-xx - yy + ww + zz) + (v.x * (xz - yw) + v.y * (yz + wx)) * 2,
 	};
 }
@@ -188,6 +225,15 @@ void quat_get_axes(quat q, vec3 * x, vec3 * y, vec3 * z) {
 }
 
 // mat4
+
+/*
+TRANSFORMATION
+
+- XYZ: orientation * scale
+- W: offset
+- `.w` indicates vector kind: 0 for direction, 1 for position
+*/
+
 mat4 mat4_set_transformation(vec3 position, vec3 scale, quat rotation) {
 	vec3 axis_x, axis_y, axis_z;
 	quat_get_axes(rotation, &axis_x, &axis_y, &axis_z);
@@ -203,6 +249,8 @@ mat4 mat4_set_transformation(vec3 position, vec3 scale, quat rotation) {
 }
 
 /*
+PROJECTION
+
 > parameters
 - XYZ: world space vector
 - ncp: world space near clipping plane
@@ -261,7 +309,7 @@ mat4 mat4_inverse_transformation(mat4 m) {
 	};
 }
 
-vec4 mat4_transform_vec(mat4 m, vec4 v) {
+vec4 mat4_mul_vec(mat4 m, vec4 v) {
 	return (vec4){
 		vec4_dot(VEC4(m.x.x, m.y.x, m.z.x, m.w.x), v),
 		vec4_dot(VEC4(m.x.y, m.y.y, m.z.y, m.w.y), v),
@@ -270,11 +318,11 @@ vec4 mat4_transform_vec(mat4 m, vec4 v) {
 	};
 }
 
-mat4 mat4_transform_mat(mat4 m1, mat4 m2) {
+mat4 mat4_mul_mat(mat4 m1, mat4 m2) {
 	return (mat4){
-		mat4_transform_vec(m1, m2.x),
-		mat4_transform_vec(m1, m2.y),
-		mat4_transform_vec(m1, m2.z),
-		mat4_transform_vec(m1, m2.w),
+		mat4_mul_vec(m1, m2.x),
+		mat4_mul_vec(m1, m2.y),
+		mat4_mul_vec(m1, m2.z),
+		mat4_mul_vec(m1, m2.w),
 	};
 }

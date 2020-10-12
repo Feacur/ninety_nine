@@ -40,7 +40,7 @@ typedef vec4 quat;
 #define MAT4(x, y, z, w) (mat4){x, y, z, w}
 
 #define CPLX(x, y) (cplx){x, y}
-#define QUAT(x, y, z, w) (cplx){x, y, z, w}
+#define QUAT(x, y, z, w) (quat){x, y, z, w}
 
 //
 #define VEC2_SINGLE(v) (vec2){v, v}
@@ -54,5 +54,9 @@ typedef vec4 quat;
 #define UVEC2_SINGLE(v) (uvec2){v, v}
 #define UVEC3_SINGLE(v) (uvec3){v, v, v}
 #define UVEC4_SINGLE(v) (uvec4){v, v, v, v}
+
+//
+#define CPLX_IDENTITY_ROTATION() CPLX(1,0)
+#define QUAT_IDENTITY_ROTATION() QUAT(0,0,0,1)
 
 #endif // ENGINE_MATH_TYPES

@@ -3,6 +3,10 @@
 
 #include "engine/api/math_types.h"
 
+#define TAU 6.28318530718f
+#define RAD2DEG (360/TAU)
+#define DEG2RAD (TAU/360)
+
 s32 mul_div_s32(s32 value, s32 numerator, s32 denominator);
 u64 mul_div_u64(u64 value, u64 numerator, u64 denominator);
 
@@ -77,6 +81,13 @@ uvec4 uvec4_mul(uvec4 v1, uvec4 v2);
 uvec4 uvec4_div(uvec4 v1, uvec4 v2);
 u32 uvec4_dot(uvec4 v1, uvec4 v2);
 
+// complex number
+cplx cplx_set_radians(r32 radians);
+cplx cplx_conjugate(cplx c);
+cplx cplx_reciprocal(cplx c);
+cplx cplx_mul(cplx c1, cplx c2);
+r32 cplx_get_radians(cplx c);
+
 // vec3, cross product
 vec3 vec3_cross(vec3 v1, vec3 v2);
 
@@ -93,7 +104,7 @@ void quat_get_axes(quat q, vec3 * x, vec3 * y, vec3 * z);
 mat4 mat4_set_transformation(vec3 position, vec3 scale, quat rotation);
 mat4 mat4_set_projection(vec2 scale, r32 ncp, r32 fcp, r32 ortho);
 mat4 mat4_inverse_transformation(mat4 m);
-vec4 mat4_transform_vec(mat4 m, vec4 v);
-mat4 mat4_transform_mat(mat4 m1, mat4 m2);
+vec4 mat4_mul_vec(mat4 m, vec4 v);
+mat4 mat4_mul_mat(mat4 m1, mat4 m2);
 
 #endif // ENGINE_MATHS
