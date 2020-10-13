@@ -232,10 +232,10 @@ static void impl_keyboard_process_virtual_key(struct Engine_Window * window, USH
 	//
 	switch (key) {
 		// common keyboard, ASCII control characters
-		case VK_BACK:     window->keyboard.keys[KC_Backspace] = is_down; break;
-		case VK_TAB:      window->keyboard.keys[KC_Tab]       = is_down; break;
-		case VK_RETURN:   window->keyboard.keys[KC_Enter]     = is_down; break;
-		case VK_ESCAPE:   window->keyboard.keys[KC_Esc]       = is_down; break;
+		case VK_BACK:   window->keyboard.keys[KC_Backspace] = is_down; break;
+		case VK_TAB:    window->keyboard.keys[KC_Tab]       = is_down; break;
+		case VK_RETURN: window->keyboard.keys[KC_Enter]     = is_down; break;
+		case VK_ESCAPE: window->keyboard.keys[KC_Esc]       = is_down; break;
 		// common keyboard, ASCII printable characters
 		case VK_SPACE:      window->keyboard.keys[KC_Space]                   = is_down; break;
 		case VK_OEM_7:      window->keyboard.keys[KC_SingleQuote_DoubleQuote] = is_down; break;
