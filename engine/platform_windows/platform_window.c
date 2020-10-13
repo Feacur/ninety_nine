@@ -11,9 +11,12 @@
 
 //
 #define ENGINE_WINDOW_POINTER "engine_window_pointer"
+#define ENGINE_MOUSE_KEYS 8
+#define ENGINE_KEYBOARD_KEYS 256
 
 static HWND impl_window_raw_input_target = NULL;
 
+static void impl_keyboard_remap_ascii(struct Engine_Window * window);
 static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 //
@@ -34,13 +37,13 @@ struct Engine_Window {
 		svec2 display_position;
 		svec2 window_position;
 		vec2  wheel;
-		bool  keys[8];
-		bool  prev[8];
+		bool  keys[ENGINE_MOUSE_KEYS];
+		bool  prev[ENGINE_MOUSE_KEYS];
 	} mouse;
 
 	struct {
-		bool keys[256];
-		bool prev[256];
+		bool keys[ENGINE_KEYBOARD_KEYS];
+		bool prev[ENGINE_KEYBOARD_KEYS];
 	} keyboard;
 };
 
@@ -81,15 +84,14 @@ void engine_window_deinit_context(struct Engine_Window * window) {
 	engine_rendering_context_destroy(window->rendering_context);
 }
 
-static void engine_window_reset_input(struct Engine_Window * window) {
+void engine_window_update(struct Engine_Window * window) {
+	impl_keyboard_remap_ascii(window);
+
 	memcpy(window->mouse.prev,    window->mouse.keys,    sizeof(window->mouse.keys));
 	memcpy(window->keyboard.prev, window->keyboard.keys, sizeof(window->keyboard.keys));
 	window->mouse.delta = SVEC2(0, 0);
 	window->mouse.wheel = VEC2(0, 0);
-}
 
-void engine_window_update(struct Engine_Window * window) {
-	engine_window_reset_input(window);
 	engine_rendering_context_update(window->rendering_context);
 }
 
@@ -106,12 +108,12 @@ svec2 engine_window_mouse_window_position(struct Engine_Window * window) {
 }
 
 bool engine_window_mouse_button(struct Engine_Window * window, u8 key) {
-	if (key >= sizeof(window->mouse.keys)) { return false; }
+	if (key >= ENGINE_MOUSE_KEYS) { return false; }
 	return window->mouse.keys[key];
 }
 
 bool engine_window_mouse_transition(struct Engine_Window * window, u8 key, bool state) {
-	if (key >= sizeof(window->mouse.keys)) { return false; }
+	if (key >= ENGINE_MOUSE_KEYS) { return false; }
 	bool now  = window->mouse.keys[key];
 	bool prev = window->mouse.prev[key];
 	return (now != prev) && (now == state);
@@ -128,7 +130,10 @@ bool engine_window_key_transition(struct Engine_Window * window, u8 key, bool st
 }
 
 void engine_window_toggle_raw_input(struct Engine_Window * window) {
-	engine_window_reset_input(window);
+	memset(window->mouse.keys,    0, sizeof(window->mouse.keys));
+	memset(window->keyboard.keys, 0, sizeof(window->keyboard.keys));
+	window->mouse.delta = SVEC2(0, 0);
+	window->mouse.wheel = VEC2(0, 0);
 
 	// https://docs.microsoft.com/windows-hardware/drivers/hid/hid-usages
 	HWND hwnd_target; USHORT flags;
@@ -224,32 +229,45 @@ void engine_rendering_context__window_detach(struct Engine_Window * window) {
 // internal implementation
 //
 
+static void impl_keyboard_remap_ascii(struct Engine_Window * window) {
+	bool * keys = window->keyboard.keys;
+	//
+	memcpy(keys + 'A', keys + 'a', (size_t)(1 + 'z' - 'a'));
+	//
+	char const symbols_src[] = "0123456789"    "\'"    ",-./;=["    "\\"    "]`";
+	char const symbols_dst[] = ")!@#$%^&*("    "\""    "<_>?:+{"    "|"     "}~";
+	u8 const symbols_number = sizeof(symbols_src) / sizeof(symbols_src[0]);
+	for (u8 i = 0; i < symbols_number; ++i) {
+		keys[(u8)symbols_dst[i]] = keys[(u8)symbols_src[i]];
+	}
+}
+
 static void impl_keyboard_process_virtual_key(struct Engine_Window * window, USHORT key, bool is_down) {
-	if ('A'        <= key && key <= 'Z')        { window->keyboard.keys[KC_A    + key - 'A']        = is_down; return; }
-	if ('0'        <= key && key <= '9')        { window->keyboard.keys[KC_D0   + key - '0']        = is_down; return; }
+	if ('A'        <= key && key <= 'Z')        { window->keyboard.keys['a'     + key - 'A']        = is_down; return; }
+	if ('0'        <= key && key <= '9')        { window->keyboard.keys['0'     + key - '0']        = is_down; return; }
 	if (VK_NUMPAD0 <= key && key <= VK_NUMPAD9) { window->keyboard.keys[KC_Num0 + key - VK_NUMPAD0] = is_down; return; }
 	if (VK_F1      <= key && key <= VK_F24)     { window->keyboard.keys[KC_F1   + key - VK_F1]      = is_down; return; }
 	//
 	switch (key) {
 		// common keyboard, ASCII control characters
-		case VK_BACK:   window->keyboard.keys[KC_Backspace] = is_down; break;
-		case VK_TAB:    window->keyboard.keys[KC_Tab]       = is_down; break;
-		case VK_RETURN: window->keyboard.keys[KC_Enter]     = is_down; break;
-		case VK_ESCAPE: window->keyboard.keys[KC_Esc]       = is_down; break;
+		case VK_BACK:   window->keyboard.keys['\b'] = is_down; break;
+		case VK_TAB:    window->keyboard.keys['\t'] = is_down; break;
+		case VK_RETURN: window->keyboard.keys['\r'] = is_down; break;
+		case VK_ESCAPE: window->keyboard.keys[0x1B] = is_down; break;
 		// common keyboard, ASCII printable characters
-		case VK_SPACE:      window->keyboard.keys[KC_Space]                   = is_down; break;
-		case VK_OEM_7:      window->keyboard.keys[KC_SingleQuote_DoubleQuote] = is_down; break;
-		case VK_OEM_COMMA:  window->keyboard.keys[KC_Comma_AngleL]            = is_down; break;
-		case VK_OEM_MINUS:  window->keyboard.keys[KC_Minus_Underscore]        = is_down; break;
-		case VK_OEM_PERIOD: window->keyboard.keys[KC_Period_AngleR]           = is_down; break;
-		case VK_OEM_2:      window->keyboard.keys[KC_Slash_Question]          = is_down; break;
-		case VK_OEM_1:      window->keyboard.keys[KC_Semicolon_Colon]         = is_down; break;
-		case VK_OEM_PLUS:   window->keyboard.keys[KC_Equals_Plus]             = is_down; break;
-		case VK_OEM_4:      window->keyboard.keys[KC_SquareL_CurlyL]          = is_down; break;
-		case VK_OEM_5:      window->keyboard.keys[KC_Backslash_Vertical]      = is_down; break;
-		case VK_OEM_6:      window->keyboard.keys[KC_SquareR_CurlyR]          = is_down; break;
-		case VK_OEM_3:      window->keyboard.keys[KC_Backtick_Tilde]          = is_down; break;
-		case VK_DELETE:     window->keyboard.keys[KC_Del]                     = is_down; break;
+		case VK_SPACE:      window->keyboard.keys[' ']  = is_down; break;
+		case VK_OEM_7:      window->keyboard.keys['\''] = is_down; break;
+		case VK_OEM_COMMA:  window->keyboard.keys[',']  = is_down; break;
+		case VK_OEM_MINUS:  window->keyboard.keys['-']  = is_down; break;
+		case VK_OEM_PERIOD: window->keyboard.keys['.']  = is_down; break;
+		case VK_OEM_2:      window->keyboard.keys['/']  = is_down; break;
+		case VK_OEM_1:      window->keyboard.keys[';']  = is_down; break;
+		case VK_OEM_PLUS:   window->keyboard.keys['=']  = is_down; break;
+		case VK_OEM_4:      window->keyboard.keys['[']  = is_down; break;
+		case VK_OEM_5:      window->keyboard.keys['\\'] = is_down; break;
+		case VK_OEM_6:      window->keyboard.keys[']']  = is_down; break;
+		case VK_OEM_3:      window->keyboard.keys['`']  = is_down; break;
+		case VK_DELETE:     window->keyboard.keys[0x7f] = is_down; break;
 		// common keyboard, non-ASCII
 		case VK_CAPITAL:  window->keyboard.keys[KC_CapsLock]    = is_down; break;
 		case VK_SHIFT:    window->keyboard.keys[KC_Shift]       = is_down; break;
@@ -324,7 +342,7 @@ static void raw_input_callback_mouse(struct Engine_Window * window, RAWMOUSE * d
 	}
 
 	//
-	static u32 const keys_down[sizeof(window->mouse.keys)] = {
+	static u32 const keys_down[ENGINE_MOUSE_KEYS] = {
 		RI_MOUSE_BUTTON_1_DOWN,
 		RI_MOUSE_BUTTON_2_DOWN,
 		RI_MOUSE_BUTTON_3_DOWN,
@@ -332,7 +350,7 @@ static void raw_input_callback_mouse(struct Engine_Window * window, RAWMOUSE * d
 		RI_MOUSE_BUTTON_5_DOWN,
 	};
 
-	static u32 const keys_up[sizeof(window->mouse.keys)] = {
+	static u32 const keys_up[ENGINE_MOUSE_KEYS] = {
 		RI_MOUSE_BUTTON_1_UP,
 		RI_MOUSE_BUTTON_2_UP,
 		RI_MOUSE_BUTTON_3_UP,
@@ -340,7 +358,7 @@ static void raw_input_callback_mouse(struct Engine_Window * window, RAWMOUSE * d
 		RI_MOUSE_BUTTON_5_UP,
 	};
 
-	for (u8 i = 0; i < sizeof(window->mouse.keys); ++i) {
+	for (u8 i = 0; i < ENGINE_MOUSE_KEYS; ++i) {
 		bool is_down = (data->usButtonFlags & keys_down[i]) == keys_down[i];
 		bool is_up   = (data->usButtonFlags & keys_up[i])   == keys_up[i];
 		window->mouse.keys[i] = is_down && !is_up;
@@ -424,7 +442,7 @@ static void impl_process_message_mouse(struct Engine_Window * window, WPARAM wPa
 	window->mouse.wheel.y += wheel_mask.y * (GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
 
 	//
-	static u32 const keys_down[sizeof(window->mouse.keys)] = {
+	static u32 const keys_down[ENGINE_MOUSE_KEYS] = {
 		MK_LBUTTON,
 		MK_MBUTTON,
 		MK_RBUTTON,
@@ -433,7 +451,7 @@ static void impl_process_message_mouse(struct Engine_Window * window, WPARAM wPa
 	};
 
 	WPARAM virtual_keys = wParam;
-	for (u8 i = 0; i < sizeof(window->mouse.keys); ++i) {
+	for (u8 i = 0; i < ENGINE_MOUSE_KEYS; ++i) {
 		bool is_down = (virtual_keys & keys_down[i]) == keys_down[i];
 		window->mouse.keys[i] = is_down;
 	}
@@ -520,3 +538,5 @@ static LRESULT CALLBACK impl_window_procedure(HWND hwnd, UINT message, WPARAM wP
 
 //
 #undef ENGINE_WINDOW_POINTER
+#undef ENGINE_MOUSE_KEYS
+#undef ENGINE_KEYBOARD_KEYS

@@ -14,9 +14,9 @@ enum Key_Code {
 	KC_D0 = '0', KC_D1, KC_D2, KC_D3, KC_D4, KC_D5, KC_D6, KC_D7, KC_D8, KC_D9,
 	KC_Semicolon_Colon = ';',
 	KC_Equals_Plus = '=',
-	KC_A = 'A', KC_B, KC_C, KC_D, KC_E, KC_F, KC_G, KC_H, KC_I, KC_J, KC_K, KC_L, KC_M, KC_N, KC_O, KC_P, KC_Q, KC_R, KC_S, KC_T, KC_U, KC_V, KC_W, KC_X, KC_Y, KC_Z,
 	KC_SquareL_CurlyL = '[', KC_Backslash_Vertical = '\\', KC_SquareR_CurlyR = ']',
 	KC_Backtick_Tilde = '`',
+	KC_A = 'a', KC_B, KC_C, KC_D, KC_E, KC_F, KC_G, KC_H, KC_I, KC_J, KC_K, KC_L, KC_M, KC_N, KC_O, KC_P, KC_Q, KC_R, KC_S, KC_T, KC_U, KC_V, KC_W, KC_X, KC_Y, KC_Z,
 	KC_Del = 0x7f,
 	// common keyboard, non-ASCII
 	KC_CapsLock,
