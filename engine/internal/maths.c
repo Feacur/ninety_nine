@@ -129,6 +129,16 @@ uvec4 uvec4_div(uvec4 v1, uvec4 v2) { return (uvec4){v1.x / v2.x, v1.y / v2.y, v
 u32 uvec4_dot(uvec4 v1, uvec4 v2) { return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z + v1.w * v2.w; }
 
 // complex number
+
+/*
+> code assumes unit-length complex numbers for rotation pruposes
+
+> representations
+x + y*i == real + imaginary
+e^(i * angle) == cos(angle) + i*sin(angle)
+
+*/
+
 cplx cplx_set_radians(r32 radians) { return (cplx){cosf(radians), sinf(radians)}; }
 
 // if `с` is normalized, then `cplx_reciprocal` is equivalent to `cplx_conjugate`
@@ -157,8 +167,60 @@ vec3 vec3_cross(vec3 v1, vec3 v2) {
 }
 
 // vec4, quaternion
-// > assumed to be normalized (of unit length)
+
+/*
+> code assumes unit-length quaternions for rotation purposes
+
+> representations
+x*i + y*j + z*k + w == vector + scalar
+e^(axis * angle) == axis*sin(angle) + cos(angle)
+
+make notice, it's `angle`, not `angle/2`; more on that later...
+
+have: arbitrary vector `V`
+want: rotate it around an `axis` by an `angle`
+
+> Rodrigues' rotation formula
+  V              = V_parallel_to_axis + V_perpendicular_to_axis
+  V_para         = axis * dot(V, axis)
+  V_para_rotated = V_parallel_to_axis
+  V_perp_rotated = V_perp * cos(angle) + (axis x V_perp) * sin(angle)
+  V_rotated      = V_para_rotated + V_perp_rotated
+
+- expand the previous formulas
+  V_rotated = V_para + V_perp * cos(angle) + (axis x V_perp) * sin(angle)
+            = V_para + (V - V_para) * cos(angle) + (axis x (V - V_para)) * sin(angle)
+            = V_para * (1 - cos(angle)) + V * cos(angle) + (axis x V) * sin(angle)
+            = axis * dot(V, axis) * (1 - cos(angle)) + V * cos(angle) + (axis x V) * sin(angle)
+
+> reasonning quaternion application for rotations
+  V_perp_rotated = (axis x V_perp) * sin(angle) + V_perp * cos(angle)
+                 = (axis*sin(angle) + cos(angle)) * V_perp
+                 = e^(axis * angle) * V_perp
+
+- remember special cases
+                e^(axis * angle) * V_para = V_para * e^(axis * angle)
+  (axis*sin(angle) + cos(angle)) * V_para = V_para * (axis*sin(angle) + cos(angle))
+                      cos(angle) * V_para = V_para * cos(angle)
+
+                         e^(axis * angle) * V_perp = V_perp * e^(-axis * angle)
+           (axis*sin(angle) + cos(angle)) * V_perp = V_perp * (axis*sin(angle) + cos(angle))
+  (axis x V_perp)*sin(angle) + V_perp * cos(angle) = -(V_perp x axis) * sin(angle) + V_perp * cos(angle)
+
+- shrink V_para and V_perp into a single vector
+  V_rotated = V_para_rotated + V_perp_rotated
+            = V_para + e^(axis * angle) * V_perp
+            = e^(axis * angle/2) * e^(-axis * angle/2) * V_para + e^(axis * angle/2) * e^(axis * angle/2) * V_perp
+            = e^(axis * angle/2) * V_para * e^(-axis * angle/2) + e^(axis * angle/2) * V_perp * e^(axis * angle/2)
+            = e^(axis * angle/2) * (V_para + V_perp) * e^(-axis * angle/2)
+            = e^(axis * angle/2) * V * e^(-axis * angle/2)
+
+... that's why we use half-angle quaternions: to rotate arbitrary vectors without the need to
+    split them into parallel and perpendicular parts; at least, that's a partial explanation
+*/
+
 quat quat_set_axis(vec3 axis, r32 radians) {
+	// construct a half-angle quaternion, for `quat_transform` expects one
 	r32 const r = radians * 0.5f;
 	r32 const s = sinf(r);
 	r32 const c = cosf(r);
@@ -192,6 +254,9 @@ quat quat_reciprocal(quat q) {
 }
 
 quat quat_mul(quat q1, quat q2) {
+	// result = (v1 + s1) * (v2 + s2)
+	//        = v1*v2 + v1*s2 + v2*s1 + s1*s1
+	//        = vec3_cross(v1,v2) - vec3_dot(v1,v2) + v1*s2 + v2*s1 + s1*s2
 	return (quat){
 		 q1.x*q2.w + q1.y*q2.z - q1.z*q2.y + q1.w*q2.x,
 		-q1.x*q2.z + q1.y*q2.w + q1.z*q2.x + q1.w*q2.y,
