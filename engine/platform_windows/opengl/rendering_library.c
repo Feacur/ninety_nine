@@ -16,7 +16,7 @@
 // https://github.com/SFML/SFML/blob/master/src/SFML/Window/Win32/WglContext.cpp
 
 //
-#define ENGINE_rendering_library_NAME "opengl32.dll"
+#define ENGINE_RENDERING_LIBRARY_NAME "opengl32.dll"
 
 struct Rendering_Library {
 	HMODULE handle;
@@ -68,7 +68,7 @@ void engine_system__rendering_library_load(void) {
 	struct Rendering_Library * rendering_library = ENGINE_MALLOC(sizeof(*rendering_library));
 	memset(rendering_library, 0, sizeof(*rendering_library));
 
-	rendering_library->handle = LoadLibraryA(ENGINE_rendering_library_NAME);
+	rendering_library->handle = LoadLibraryA(ENGINE_RENDERING_LIBRARY_NAME);
 
 	//
 	rendering_library->wgl.GetProcAddress = (PFNWGLGETPROCADDRESSPROC)GetProcAddress(rendering_library->handle, "wglGetProcAddress");
@@ -212,4 +212,4 @@ static void * impl_get_function(cstring name) {
 }
 
 //
-#undef ENGINE_rendering_library_NAME
+#undef ENGINE_RENDERING_LIBRARY_NAME

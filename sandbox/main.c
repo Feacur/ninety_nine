@@ -2,6 +2,7 @@
 #include "engine/api/graphics_types.h"
 #include "engine/api/maths.h"
 #include "engine/api/key_codes.h"
+#include "engine/api/rendering_vm.h"
 #include "engine/api/platform_system.h"
 #include "engine/api/platform_time.h"
 #include "engine/api/platform_window.h"
@@ -20,13 +21,19 @@ int main(int argc, char * argv[]) {
 	engine_system_init();
 
 	//
+	cstring asset_path_shader = "assets/shaders/texture_tint.glsl";
 	u8 * buffer = NULL; size_t buffer_size = 0;
-	engine_file_read("assets/settings.cfg", &buffer, &buffer_size);
+	engine_file_read(asset_path_shader, &buffer, &buffer_size);
 	printf("%.*s\n", (u32)buffer_size, buffer);
 
-	printf("file time: %zd\n", engine_file_time("assets/settings.cfg"));
+	printf("file time: %zd\n", engine_file_time(asset_path_shader));
 
 	free(buffer);
+
+	//
+	size_t rendering_buffer_length = 0;
+	size_t rendering_buffer_capacity = 1024;
+	u8 * rendering_buffer = ENGINE_MALLOC(rendering_buffer_capacity);
 
 	//
 	u64 start_ticks = engine_time_get_ticks();
@@ -51,6 +58,7 @@ int main(int argc, char * argv[]) {
 
 		// update logic
 		(void)dt;
+		engine_rendering_vm_update(rendering_buffer, rendering_buffer_length);
 
 		// process system input
 		if (engine_window_key(window, KC_Alt) && engine_window_key_transition(window, KC_F4, true)) { break; }

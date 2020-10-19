@@ -1,5 +1,6 @@
 #include "engine/internal/maths.c"
 #include "engine/internal/opengl.c"
+#include "engine/internal/opengl_vm.c"
 
 #if defined(_WIN64) || defined(_WIN32)
 #include "engine/platform_windows/platform_file.c"
