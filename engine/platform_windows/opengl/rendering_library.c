@@ -40,7 +40,7 @@ struct Rendering_Library {
 	cstring extensions_ext;
 	cstring extensions_arb;
 };
-static struct Rendering_Library * instance;
+static struct Rendering_Library * rlib;
 
 static void impl_handle_extensions_loading(struct Rendering_Library * opengl, HDC hdc);
 static bool impl_contains_full_word(cstring container, cstring value);
@@ -93,12 +93,12 @@ void engine_system__rendering_library_load(void) {
 	DestroyWindow(hwnd);
 
 	//
-	instance = rendering_library;
+	rlib = rendering_library;
 }
 
 void engine_system__rendering_library_unload(void) {
-	FreeLibrary(instance->handle);
-	ENGINE_FREE(instance);
+	FreeLibrary(rlib->handle);
+	ENGINE_FREE(rlib);
 }
 
 //
@@ -113,25 +113,25 @@ void engine_load_functions(void) {
 }
 
 bool engine_has_arb(cstring name) {
-	return impl_contains_full_word(instance->extensions_arb, name);
+	return impl_contains_full_word(rlib->extensions_arb, name);
 }
 
 bool engine_has_ext(cstring name) {
-	return impl_contains_full_word(instance->extensions_ext, name);
+	return impl_contains_full_word(rlib->extensions_ext, name);
 }
 
-HGLRC engine_CreateContext(HDC hDc) { return instance->wgl.CreateContext(hDc); }
-BOOL  engine_DeleteContext(HGLRC oldContext) { return instance->wgl.DeleteContext(oldContext); }
-PROC  engine_GetProcAddress(LPCSTR lpszProc) { return instance->wgl.GetProcAddress(lpszProc); }
-BOOL  engine_MakeCurrent(HDC hDc, HGLRC newContext) { return instance->wgl.MakeCurrent(hDc, newContext); }
-BOOL  engine_ShareLists(HGLRC hrcSrvShare, HGLRC hrcSrvSource) { return instance->wgl.ShareLists(hrcSrvShare, hrcSrvSource); }
+HGLRC engine_CreateContext(HDC hDc) { return rlib->wgl.CreateContext(hDc); }
+BOOL  engine_DeleteContext(HGLRC oldContext) { return rlib->wgl.DeleteContext(oldContext); }
+PROC  engine_GetProcAddress(LPCSTR lpszProc) { return rlib->wgl.GetProcAddress(lpszProc); }
+BOOL  engine_MakeCurrent(HDC hDc, HGLRC newContext) { return rlib->wgl.MakeCurrent(hDc, newContext); }
+BOOL  engine_ShareLists(HGLRC hrcSrvShare, HGLRC hrcSrvSource) { return rlib->wgl.ShareLists(hrcSrvShare, hrcSrvSource); }
 
-const char * engine_GetExtensionsStringARB(HDC hdc) { return instance->wgl.GetExtensionsStringARB(hdc); }
-BOOL         engine_GetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues) { return instance->wgl.GetPixelFormatAttribivARB(hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, piValues); }
-HGLRC        engine_CreateContextAttribsARB(HDC hDC, HGLRC hShareContext, const int *attribList) { return instance->wgl.CreateContextAttribsARB(hDC, hShareContext, attribList); }
+const char * engine_GetExtensionsStringARB(HDC hdc) { return rlib->wgl.GetExtensionsStringARB(hdc); }
+BOOL         engine_GetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues) { return rlib->wgl.GetPixelFormatAttribivARB(hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, piValues); }
+HGLRC        engine_CreateContextAttribsARB(HDC hDC, HGLRC hShareContext, const int *attribList) { return rlib->wgl.CreateContextAttribsARB(hDC, hShareContext, attribList); }
 
-const char * engine_GetExtensionsStringEXT(void) { return instance->wgl.GetExtensionsStringEXT(); }
-BOOL         engine_SwapIntervalEXT(int interval) { return instance->wgl.SwapIntervalEXT(interval); }
+const char * engine_GetExtensionsStringEXT(void) { return rlib->wgl.GetExtensionsStringEXT(); }
+BOOL         engine_SwapIntervalEXT(int interval) { return rlib->wgl.SwapIntervalEXT(interval); }
 
 //
 // internal implementaion, system
@@ -202,10 +202,10 @@ static bool impl_contains_full_word(cstring container, cstring value) {
 static void * impl_get_function(cstring name) {
 	if (!name) { return NULL; }
 
-	PROC ogl_address = instance->wgl.GetProcAddress(name);
+	PROC ogl_address = rlib->wgl.GetProcAddress(name);
 	if (ogl_address) { return (void *)ogl_address; }
 
-	FARPROC dll_address = GetProcAddress(instance->handle, name);
+	FARPROC dll_address = GetProcAddress(rlib->handle, name);
 	if (dll_address) { return (void *)dll_address; }
 
 	return NULL;

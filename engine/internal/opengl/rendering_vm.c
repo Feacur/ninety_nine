@@ -2,16 +2,40 @@
 #include "engine/api/rendering_vm.h"
 #include "opengl.h"
 
+#define GET_VALUE(type, name) type name; memcpy(&name, buffer, sizeof(name)); buffer += sizeof(name);
+#define OGL_VERSION(major, minor) (major * 10 + minor)
+
 #define REGISTRY_RVM_INSTRUCTION(name) static void impl_ ## name(u8 const * buffer);
 #include "engine/registry/rendering_vm_instruction.h"
+
+//
+// API
+//
+
+struct Rendering_VM {
+	GLint version;
+};
+static struct Rendering_VM * rvm;
+
+void engine_rendering_vm_init(void) {
+	struct Rendering_VM * rendering_vm = ENGINE_MALLOC(sizeof(*rvm));
+
+	GLint version_major, version_minor;
+	glGetIntegerv(GL_MAJOR_VERSION, &version_major);
+	glGetIntegerv(GL_MINOR_VERSION, &version_minor);
+	rendering_vm->version = OGL_VERSION(version_major, version_minor);
+
+	rvm = rendering_vm;
+}
+
+void engine_rendering_vm_deinit(void) {
+	ENGINE_FREE(rvm);
+}
 
 void engine_rendering_vm_update(u8 const * buffer, size_t buffer_length) {
 	u8 const * buffer_end = buffer + buffer_length;
 	while (buffer < buffer_end) {
-		enum RVM_Instruction instruction;
-		if ((size_t)(buffer_end - buffer) < sizeof(instruction)) { ENGINE_DEBUG_BREAK(); break; }
-		memcpy(&instruction, buffer, sizeof(instruction)); buffer += sizeof(instruction);
-
+		GET_VALUE(enum RVM_Instruction, instruction)
 		switch (instruction) {
 			#define REGISTRY_RVM_INSTRUCTION(name) case RVM_ ## name: impl_ ## name(buffer); break;
 			#include "engine/registry/rendering_vm_instruction.h"
@@ -22,6 +46,22 @@ void engine_rendering_vm_update(u8 const * buffer, size_t buffer_length) {
 //
 // internal implementation
 //
+
+// mapping
+static GLenum get_comparison(enum RVM_Comparison value) {
+	switch (value) {
+		case RVM_Comparison_False:   return GL_NEVER;
+		case RVM_Comparison_True:    return GL_ALWAYS;
+		case RVM_Comparison_Less:    return GL_LESS;
+		case RVM_Comparison_LEqual:  return GL_LEQUAL;
+		case RVM_Comparison_Equal:   return GL_EQUAL;
+		case RVM_Comparison_NEqual:  return GL_NOTEQUAL;
+		case RVM_Comparison_Greater: return GL_GREATER;
+		case RVM_Comparison_GEqual:  return GL_GEQUAL;
+	}
+	ENGINE_DEBUG_BREAK();
+	return GL_NONE;
+}
 
 // Common
 static void impl_Common_Set_Clip(u8 const * buffer) {
@@ -51,23 +91,39 @@ static void impl_Color_Set_Blend(u8 const * buffer) {
 
 // Depth
 static void impl_Depth_Set_Read(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(bool, value)
+	if (value) { glEnable(GL_DEPTH_TEST); }
+	else       { glDisable(GL_DEPTH_TEST); }
 }
 
 static void impl_Depth_Set_Write(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(bool, value)
+	glDepthMask(value);
 }
 
 static void impl_Depth_Set_Clear(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(r32, value)
+	if (rvm->version >= OGL_VERSION(4, 1)) {
+		glClearDepthf(value);
+	}
+	else {
+		glClearDepth((double)value);
+	}
 }
 
 static void impl_Depth_Set_Comparison(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(enum RVM_Comparison, value)
+	glDepthFunc(get_comparison(value));
 }
 
 static void impl_Depth_Set_Range(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(vec2, value)
+	if (rvm->version >= OGL_VERSION(4, 1)) {
+		glDepthRangef(value.x, value.y);
+	}
+	else {
+		glDepthRange((double)value.x, (double)value.y);
+	}
 }
 
 // Stencil
@@ -183,3 +239,5 @@ static void impl_Render_Clear(u8 const * buffer) {
 static void impl_Render_Draw(u8 const * buffer) {
 	++buffer;
 }
+
+#undef GET_VALUE
