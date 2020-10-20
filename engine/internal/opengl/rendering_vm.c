@@ -1,4 +1,5 @@
 #include "engine/api/code.h"
+#include "engine/api/math_types.h"
 #include "engine/api/rendering_vm.h"
 #include "opengl.h"
 
@@ -37,7 +38,7 @@ void engine_rendering_vm_update(u8 const * buffer, size_t buffer_length) {
 	while (buffer < buffer_end) {
 		GET_VALUE(enum RVM_Instruction, instruction)
 		switch (instruction) {
-			#define REGISTRY_RVM_INSTRUCTION(name) case RVM_ ## name: impl_ ## name(buffer); break;
+			#define REGISTRY_RVM_INSTRUCTION(name) case RVM_Instruction_ ## name: impl_ ## name(buffer); break;
 			#include "engine/registry/rendering_vm_instruction.h"
 		}
 	}
@@ -73,27 +74,40 @@ static void impl_Common_Set_Viewport(u8 const * buffer) {
 }
 
 // Color
-static void impl_Color_Set_Read(u8 const * buffer) {
-	++buffer;
-}
-
 static void impl_Color_Set_Write(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(enum RVM_Color_Write, value)
+	glColorMask(
+		(value & RVM_Color_Write_R) == RVM_Color_Write_R,
+		(value & RVM_Color_Write_G) == RVM_Color_Write_G,
+		(value & RVM_Color_Write_B) == RVM_Color_Write_B,
+		(value & RVM_Color_Write_A) == RVM_Color_Write_A
+	);
 }
 
 static void impl_Color_Set_Clear(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(vec4, value)
+	glClearColor(value.x, value.y, value.z, value.w);
 }
 
 static void impl_Color_Set_Blend(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(enum RVM_Color_Blend, value)
+	if (value == RVM_Color_Blend_Opaque) { glDisable(GL_BLEND); return; }
+	glEnable(GL_BLEND);
+	switch (value) {
+		case RVM_Color_Blend_Alpha:      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); break;
+		case RVM_Color_Blend_Additive:   glBlendFunc(GL_SRC_ALPHA, GL_ONE);                 break;
+		case RVM_Color_Blend_Multiply:   glBlendFunc(GL_DST_COLOR, GL_ZERO);                break;
+		case RVM_Color_Blend_PMAlpha:    glBlendFunc(GL_ONE,       GL_ONE_MINUS_SRC_ALPHA); break;
+		case RVM_Color_Blend_PMAdditive: glBlendFunc(GL_ONE,       GL_ONE);                 break;
+		default: ENGINE_DEBUG_BREAK(); break;
+	}
 }
 
 // Depth
 static void impl_Depth_Set_Read(u8 const * buffer) {
 	GET_VALUE(bool, value)
-	if (value) { glEnable(GL_DEPTH_TEST); }
-	else       { glDisable(GL_DEPTH_TEST); }
+	if (!value) { glDisable(GL_DEPTH_TEST); return; }
+	glEnable(GL_DEPTH_TEST);
 }
 
 static void impl_Depth_Set_Write(u8 const * buffer) {
@@ -101,14 +115,19 @@ static void impl_Depth_Set_Write(u8 const * buffer) {
 	glDepthMask(value);
 }
 
-static void impl_Depth_Set_Clear(u8 const * buffer) {
+static void impl_Depth_Set_Clear_41(u8 const * buffer) {
 	GET_VALUE(r32, value)
+	glClearDepthf(value);
+}
+static void impl_Depth_Set_Clear_20(u8 const * buffer) {
+	GET_VALUE(r32, value)
+	glClearDepth((double)value);
+}
+static void impl_Depth_Set_Clear(u8 const * buffer) {
 	if (rvm->version >= OGL_VERSION(4, 1)) {
-		glClearDepthf(value);
+		impl_Depth_Set_Clear_41(buffer); return;
 	}
-	else {
-		glClearDepth((double)value);
-	}
+	impl_Depth_Set_Clear_20(buffer);
 }
 
 static void impl_Depth_Set_Comparison(u8 const * buffer) {
@@ -116,14 +135,19 @@ static void impl_Depth_Set_Comparison(u8 const * buffer) {
 	glDepthFunc(get_comparison(value));
 }
 
-static void impl_Depth_Set_Range(u8 const * buffer) {
+static void impl_Depth_Set_Range_41(u8 const * buffer) {
 	GET_VALUE(vec2, value)
+	glDepthRangef(value.x, value.y);
+}
+static void impl_Depth_Set_Range_20(u8 const * buffer) {
+	GET_VALUE(vec2, value)
+	glDepthRange((double)value.x, (double)value.y);
+}
+static void impl_Depth_Set_Range(u8 const * buffer) {
 	if (rvm->version >= OGL_VERSION(4, 1)) {
-		glDepthRangef(value.x, value.y);
+		impl_Depth_Set_Range_41(buffer); return;
 	}
-	else {
-		glDepthRange((double)value.x, (double)value.y);
-	}
+	impl_Depth_Set_Range_20(buffer);
 }
 
 // Stencil
