@@ -1,4 +1,5 @@
 #include "engine/api/code.h"
+#include "engine/api/ref.h"
 #include "engine/api/math_types.h"
 #include "engine/api/rendering_vm.h"
 #include "opengl.h"
@@ -13,8 +14,21 @@
 // API
 //
 
+struct VM_Shader;
+struct VM_Mesh;
+struct VM_Texture;
+// struct VM_Sampler;
+// struct VM_Target;
 struct Rendering_VM {
 	GLint version;
+	//
+	struct VM_Shader  * shaders;  size_t shaders_capacity;
+	struct VM_Mesh    * meshes;   size_t meshes_capacity;
+	struct VM_Texture * textures; size_t textures_capacity;
+	// struct VM_Sampler * samplers; size_t sampler_capacity;
+	// struct VM_Target  * targets;  size_t targets_capacity;
+	//
+	u32 shader, mesh, texture;
 };
 static struct Rendering_VM * rvm;
 
@@ -25,6 +39,10 @@ void engine_rendering_vm_init(void) {
 	glGetIntegerv(GL_MAJOR_VERSION, &version_major);
 	glGetIntegerv(GL_MINOR_VERSION, &version_minor);
 	rendering_vm->version = OGL_VERSION(version_major, version_minor);
+
+	rendering_vm->shader  = REF_EMPTY_ID;
+	rendering_vm->mesh    = REF_EMPTY_ID;
+	rendering_vm->texture = REF_EMPTY_ID;
 
 	rvm = rendering_vm;
 }
@@ -47,6 +65,24 @@ void engine_rendering_vm_update(u8 const * buffer, size_t buffer_length) {
 //
 // internal implementation
 //
+
+struct VM_Shader_Field {
+	GLint location;
+	u32 id;
+};
+struct VM_Shader {
+	GLuint id;
+	// struct VM_Shader_Field attributes[10]; size_t attributes_count;
+	struct VM_Shader_Field uniforms[10];   size_t uniforms_count;
+};
+
+struct VM_Mesh {
+	GLuint id;
+};
+
+struct VM_Texture {
+	GLuint id;
+};
 
 // mapping
 static GLenum get_comparison(enum RVM_Comparison value) {
@@ -248,23 +284,68 @@ static void impl_Face_Set_Front(u8 const * buffer) {
 
 // Shader
 static void impl_Shader_Allocate(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(struct Ref, ref)
+
+	if (ref.id == REF_EMPTY_ID) { return; }
+	if (ref.id >= rvm->shaders_capacity) {
+		size_t capacity = ref.id + 1;
+		struct VM_Shader * shaders = ENGINE_REALLOC(rvm->shaders, capacity * sizeof(*shaders));
+
+		if (!shaders) { ENGINE_DEBUG_BREAK(); return; }
+		memset(shaders + rvm->shaders_capacity, 0, (capacity - rvm->shaders_capacity) * sizeof(*shaders));
+
+		rvm->shaders = shaders;
+		rvm->shaders_capacity = capacity;
+	}
+
+	struct VM_Shader * shader = rvm->shaders + ref.id;
+	if (shader->id) { return; }
+
+	shader->id = glCreateProgram();
 }
 
 static void impl_Shader_Free(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(struct Ref, ref)
+
+	if (ref.id == REF_EMPTY_ID) { return; }
+	if (ref.id >= rvm->shaders_capacity) { return; }
+
+	struct VM_Shader * shader = rvm->shaders + ref.id;
+
+	if (ref.id == rvm->shader) { glUseProgram(0); rvm->shader = REF_EMPTY_ID; }
+	glDeleteProgram(shader->id);
+
+	*shader = (struct VM_Shader){.id = 0};
 }
 
 static void impl_Shader_Load(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(struct Ref, ref)
+
+	if (ref.id == REF_EMPTY_ID) { return; }
+	if (ref.id >= rvm->shaders_capacity) { return; }
+
+	struct VM_Shader * shader = rvm->shaders + ref.id;
+	(void)shader;
 }
 
 static void impl_Shader_Use(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(struct Ref, ref)
+
+	if (ref.id == REF_EMPTY_ID) { glUseProgram(0); return; }
+	if (ref.id >= rvm->shaders_capacity) { glUseProgram(0); return; }
+
+	struct VM_Shader const * shader = rvm->shaders + ref.id;
+	glUseProgram(shader->id);
 }
 
 static void impl_Shader_Uniform(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(struct Ref, ref)
+
+	if (ref.id == REF_EMPTY_ID) { return; }
+	if (ref.id >= rvm->shaders_capacity) { return; }
+
+	struct VM_Shader * shader = rvm->shaders + ref.id;
+	(void)shader;
 }
 
 // Mesh
