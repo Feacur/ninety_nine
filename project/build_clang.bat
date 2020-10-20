@@ -50,6 +50,7 @@ if defined unity_build (
 ) else ( rem alternatively, compile a set of translation units
 	if exist "./temp/unity_build*" del ".\temp\unity_build*"
 	clang -std=c99 -c "../engine/internal/*.c"                %compiler% %warnings%
+	clang -std=c99 -c "../engine/internal/opengl/*.c"         %compiler% %warnings%
 	clang -std=c99 -c "../engine/platform_windows/*.c"        %compiler% %warnings%
 	clang -std=c99 -c "../engine/platform_windows/opengl/*.c" %compiler% %warnings%
 	clang -std=c99 -c "../sandbox/*.c"                        %compiler% %warnings%

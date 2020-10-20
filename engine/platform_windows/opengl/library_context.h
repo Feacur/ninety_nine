@@ -2,7 +2,6 @@
 #define ENGINE_LIBRARY_CONTEXT
 
 #include "engine/api/types.h"
-#include "engine/api/opengl.h"
 #include <Windows.h>
 
 void engine_load_functions(void);

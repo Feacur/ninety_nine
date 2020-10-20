@@ -1,7 +1,7 @@
 #include "engine/api/code.h"
 #include "engine/api/types.h"
 #include "engine/api/graphics_types.h"
-#include "engine/api/opengl.h"
+#include "engine/internal/opengl/opengl.h"
 
 #include "../interoperations/rendering_context__window.h"
 

@@ -28,7 +28,7 @@ int main(int argc, char * argv[]) {
 
 	printf("file time: %zd\n", engine_file_time(asset_path_shader));
 
-	free(buffer);
+	ENGINE_FREE(buffer);
 
 	//
 	size_t rendering_buffer_length = 0;

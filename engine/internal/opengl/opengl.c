@@ -1,4 +1,4 @@
-#include "engine/api/opengl.h"
+#include "opengl.h"
 
 #define REGISTRY_OPENGL(type, name) type gl ## name;
 #include "engine/registry/opengl.h"

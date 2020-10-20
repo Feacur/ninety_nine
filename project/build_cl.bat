@@ -46,6 +46,7 @@ if defined unity_build (
 ) else ( rem alternatively, compile a set of translation units
 	if exist "./temp/unity_build*" del ".\temp\unity_build*"
 	cl -std:c11 -c "../engine/internal/*.c"                %compiler% %warnings%
+	cl -std:c11 -c "../engine/internal/opengl/*.c"         %compiler% %warnings%
 	cl -std:c11 -c "../engine/platform_windows/*.c"        %compiler% %warnings%
 	cl -std:c11 -c "../engine/platform_windows/opengl/*.c" %compiler% %warnings%
 	cl -std:c11 -c "../sandbox/*.c"                        %compiler% %warnings%

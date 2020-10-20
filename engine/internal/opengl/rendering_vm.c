@@ -1,7 +1,6 @@
 #include "engine/api/code.h"
 #include "engine/api/rendering_vm.h"
-#include "engine/api/rendering_vm_instruction.h"
-#include "engine/api/opengl.h"
+#include "opengl.h"
 
 #define REGISTRY_RVM_INSTRUCTION(name) static void impl_ ## name(u8 const * buffer);
 #include "engine/registry/rendering_vm_instruction.h"

@@ -50,7 +50,7 @@ size_t engine_file_read(cstring path, u8 ** buffer, size_t * buffer_size) {
 	DWORD number_of_bytes_read;
 	if (!ReadFile(handle, *buffer, (DWORD)file_size.QuadPart, &number_of_bytes_read, NULL)) {
 		printf("[err]: failed to read file: `%s`", path);
-		free(*buffer); *buffer_size = 0;
+		ENGINE_FREE(*buffer); *buffer = NULL; *buffer_size = 0;
 		return 0;
 	}
 
