@@ -19,6 +19,13 @@ enum RVM_Comparison {
 	RVM_Comparison_Greater, RVM_Comparison_GEqual,
 };
 
+enum RVM_Operation {
+	RVM_Operation_Keep, RVM_Operation_Invert,
+	RVM_Operation_Zero, RVM_Operation_Replace,
+	RVM_Operation_Incr, RVM_Operation_Incr_Wrap,
+	RVM_Operation_Decr, RVM_Operation_Decr_Wrap,
+};
+
 enum RVM_Color_Write {
 	RVM_Color_Write_None = 0,
 	RVM_Color_Write_R = (1 << 0),
@@ -34,6 +41,18 @@ enum RVM_Color_Blend {
 	RVM_Color_Blend_Multiply,
 	RVM_Color_Blend_PMAlpha,
 	RVM_Color_Blend_PMAdditive,
+};
+
+enum RVM_Face_Cull {
+	RVM_Face_Cull_None,
+	RVM_Face_Cull_Back,
+	RVM_Face_Cull_Front,
+	RVM_Face_Cull_Both,
+};
+
+enum RVM_Face_Front {
+	RVM_Face_Front_CCW,
+	RVM_Face_Front_CW,
 };
 
 #endif // ENGINE_RENDERING_VM

@@ -64,13 +64,61 @@ static GLenum get_comparison(enum RVM_Comparison value) {
 	return GL_NONE;
 }
 
+static GLenum get_operation(enum RVM_Operation value) {
+	switch (value) {
+		case RVM_Operation_Keep:      return GL_KEEP;
+		case RVM_Operation_Invert:    return GL_INVERT;
+		case RVM_Operation_Zero:      return GL_ZERO;
+		case RVM_Operation_Replace:   return GL_REPLACE;
+		case RVM_Operation_Incr:      return GL_INCR;
+		case RVM_Operation_Incr_Wrap: return GL_INCR_WRAP;
+		case RVM_Operation_Decr:      return GL_DECR;
+		case RVM_Operation_Decr_Wrap: return GL_DECR_WRAP;
+	}
+	ENGINE_DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum get_face_cull(enum RVM_Face_Cull value) {
+	switch (value) {
+		case RVM_Face_Cull_None:  return GL_NONE;
+		case RVM_Face_Cull_Back:  return GL_BACK;
+		case RVM_Face_Cull_Front: return GL_FRONT;
+		case RVM_Face_Cull_Both:  return GL_FRONT_AND_BACK;
+	}
+	ENGINE_DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum get_face_front(enum RVM_Face_Front value) {
+	switch (value) {
+		case RVM_Face_Front_CCW: return GL_CCW;
+		case RVM_Face_Front_CW:  return GL_CW;
+	}
+	ENGINE_DEBUG_BREAK();
+	return GL_NONE;
+}
+
 // Common
+static void impl_Common_Set_Clip_45(u8 const * buffer) {
+	GET_VALUE(bool, lower_left)
+	GET_VALUE(bool, zero_one)
+	glClipControl(
+		lower_left ? GL_LOWER_LEFT : GL_UPPER_LEFT,
+		zero_one ? GL_ZERO_TO_ONE : GL_NEGATIVE_ONE_TO_ONE
+	);
+}
 static void impl_Common_Set_Clip(u8 const * buffer) {
-	++buffer;
+	if (rvm->version >= OGL_VERSION(4, 5)) {
+		impl_Common_Set_Clip_45(buffer); return;
+	}
+	printf("[wrn] no clip control");
 }
 
 static void impl_Common_Set_Viewport(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(svec2, pos)
+	GET_VALUE(svec2, size)
+	glViewport(pos.x, pos.y, size.x, size.y);
 }
 
 // Color
@@ -152,36 +200,50 @@ static void impl_Depth_Set_Range(u8 const * buffer) {
 
 // Stencil
 static void impl_Stencil_Set_Read(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(bool, value)
+	if (!value) { glDisable(GL_STENCIL_TEST); return; }
+	glEnable(GL_STENCIL_TEST);
 }
 
 static void impl_Stencil_Set_Write(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(u8, value)
+	glStencilMask(value);
 }
 
 static void impl_Stencil_Set_Clear(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(u8, value)
+	glClearStencil(value);
 }
 
 static void impl_Stencil_Set_Comparison(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(enum RVM_Comparison, comparison)
+	GET_VALUE(u8, reference)
+	GET_VALUE(u8, mask)
+	glStencilFunc(get_comparison(comparison), reference, mask);
 }
 
 static void impl_Stencil_Set_Operation(u8 const * buffer) {
-	++buffer;
-}
-
-static void impl_Stencil_Set_Mask(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(enum RVM_Operation, stencil_fail__depth_any)
+	GET_VALUE(enum RVM_Operation, stencil_success__depth_fail)
+	GET_VALUE(enum RVM_Operation, stencil_success__depth_success)
+	glStencilOp(
+		get_operation(stencil_fail__depth_any),
+		get_operation(stencil_success__depth_fail),
+		get_operation(stencil_success__depth_success)
+	);
 }
 
 // Vertex
-static void impl_Vertex_Set_Cull(u8 const * buffer) {
-	++buffer;
+static void impl_Face_Set_Cull(u8 const * buffer) {
+	GET_VALUE(enum RVM_Face_Cull, value)
+	if (value == RVM_Face_Cull_None) { glDisable(GL_CULL_FACE); return; }
+	glEnable(GL_CULL_FACE);
+	glCullFace(get_face_cull(value));
 }
 
-static void impl_Vertex_Set_Front(u8 const * buffer) {
-	++buffer;
+static void impl_Face_Set_Front(u8 const * buffer) {
+	GET_VALUE(enum RVM_Face_Front, value)
+	glCullFace(get_face_front(value));
 }
 
 // Shader
