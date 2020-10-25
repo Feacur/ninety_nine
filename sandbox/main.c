@@ -38,6 +38,7 @@ int main(int argc, char * argv[]) {
 	//
 	u64 start_ticks = engine_time_get_ticks();
 	struct Engine_Window * window = engine_window_create();
+	engine_window_toggle_raw_input(window);
 	engine_window_init_context(window);
 	while (!engine_system_should_close && window && engine_window_is_active(window)) {
 		// update OS

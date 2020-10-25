@@ -1,6 +1,8 @@
 #include "engine/api/code.h"
 #include "engine/api/ref.h"
 #include "engine/api/math_types.h"
+#include "engine/api/asset_types.h"
+#include "engine/api/graphics_types.h"
 #include "engine/api/rendering_vm.h"
 #include "opengl.h"
 
@@ -130,6 +132,223 @@ static GLenum get_face_front(enum RVM_Face_Front value) {
 	switch (value) {
 		case RVM_Face_Front_CCW: return GL_CCW;
 		case RVM_Face_Front_CW:  return GL_CW;
+	}
+	ENGINE_DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum get_filter_min(enum Filter_Type mipmap, enum Filter_Type type) {
+	switch (mipmap) {
+		case Filter_Type_None: switch (type) { // no mipmaps
+			case Filter_Type_None: return GL_NEAREST;
+			case Filter_Type_Point: return GL_POINT;
+			case Filter_Type_Linear: return GL_LINEAR;
+		} break;
+		case Filter_Type_Point: switch (type) { // single mipmap
+			case Filter_Type_None: return GL_NEAREST_MIPMAP_NEAREST;
+			case Filter_Type_Point: return GL_NEAREST_MIPMAP_NEAREST;
+			case Filter_Type_Linear: return GL_LINEAR_MIPMAP_NEAREST;
+		} break;
+		case Filter_Type_Linear: switch (type) { // interpolate mipmaps
+			case Filter_Type_None: return GL_NEAREST_MIPMAP_LINEAR;
+			case Filter_Type_Point: return GL_NEAREST_MIPMAP_LINEAR;
+			case Filter_Type_Linear: return GL_LINEAR_MIPMAP_LINEAR;
+		} break;
+	}
+	ENGINE_DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum get_filter_max(enum Filter_Type type) {
+	switch (type) {
+		case Filter_Type_None: return GL_NEAREST;
+		case Filter_Type_Point: return GL_NEAREST;
+		case Filter_Type_Linear: return GL_LINEAR;
+	}
+	ENGINE_DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum get_wrap_type(enum Wrap_Type type) {
+	switch (type) {
+		case Wrap_Type_Clamp: return GL_CLAMP_TO_EDGE;
+		case Wrap_Type_Repeat: return GL_REPEAT;
+		case Wrap_Type_MClamp: return GL_MIRROR_CLAMP_TO_EDGE;
+		case Wrap_Type_MRepeat: return GL_MIRRORED_REPEAT;
+	}
+	ENGINE_DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum get_data_type(enum Data_Type value) {
+	switch (value) {
+		//
+		case Data_Type_s8:  return GL_BYTE;
+		case Data_Type_s16: return GL_SHORT;
+		case Data_Type_s32: return GL_INT;
+		//
+		case Data_Type_u8:  return GL_UNSIGNED_BYTE;
+		case Data_Type_u16: return GL_UNSIGNED_SHORT;
+		case Data_Type_u32: return GL_UNSIGNED_INT;
+		//
+		case Data_Type_r32: return GL_FLOAT;
+		case Data_Type_r64: return GL_DOUBLE;
+		//
+		case Data_Type_vec2: return GL_FLOAT;
+		case Data_Type_vec3: return GL_FLOAT;
+		case Data_Type_vec4: return GL_FLOAT;
+		//
+		case Data_Type_svec2: return GL_INT;
+		case Data_Type_svec3: return GL_INT;
+		case Data_Type_svec4: return GL_INT;
+		//
+		case Data_Type_uvec2: return GL_UNSIGNED_INT;
+		case Data_Type_uvec3: return GL_UNSIGNED_INT;
+		case Data_Type_uvec4: return GL_UNSIGNED_INT;
+		//
+		case Data_Type_mat2: return GL_FLOAT;
+		case Data_Type_mat3: return GL_FLOAT;
+		case Data_Type_mat4: return GL_FLOAT;
+		//
+		case Data_Type_unit_id: return GL_INT;
+	}
+	ENGINE_DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum get_texture_data_type(enum Texture_Type texture_type, enum Data_Type data_type) {
+	switch (texture_type) {
+		case Texture_Type_Color: switch (data_type) {
+			case Data_Type_u8:  return GL_UNSIGNED_BYTE;
+			case Data_Type_u16: return GL_UNSIGNED_SHORT;
+			case Data_Type_u32: return GL_UNSIGNED_INT;
+			case Data_Type_r32: return GL_FLOAT;
+			default: return GL_NONE;
+		} break;
+
+		case Texture_Type_Depth: switch (data_type) {
+			case Data_Type_u16: return GL_UNSIGNED_SHORT;
+			case Data_Type_u32: return GL_UNSIGNED_INT;
+			case Data_Type_r32: return GL_FLOAT;
+			default: return GL_NONE;
+		} break;
+
+		case Texture_Type_DStencil: switch (data_type) {
+			case Data_Type_u32: return GL_UNSIGNED_INT_24_8;
+			case Data_Type_r32: return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
+			default: return GL_NONE;
+		}
+
+		case Texture_Type_Stencil: switch (data_type) {
+			case Data_Type_u8: return GL_UNSIGNED_BYTE;
+			default: return GL_NONE;
+		}
+	}
+	ENGINE_DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum get_texture_internal_format(enum Texture_Type texture_type, enum Data_Type data_type, u8 channels) {
+	switch (texture_type) {
+		case Texture_Type_Color: switch (data_type) {
+			case Data_Type_u8: switch (channels) {
+				case 1: return GL_R8;
+				case 2: return GL_RG8;
+				case 3: return GL_RGB8;
+				case 4: return GL_RGBA8;
+				default: return GL_NONE;
+			} break;
+			case Data_Type_u16: switch (channels) {
+				case 1: return GL_R16;
+				case 2: return GL_RG16;
+				case 3: return GL_RGB16;
+				case 4: return GL_RGBA16;
+				default: return GL_NONE;
+			} break;
+			case Data_Type_u32: switch (channels) {
+				case 1: return GL_R32UI;
+				case 2: return GL_RG32UI;
+				case 3: return GL_RGB32UI;
+				case 4: return GL_RGBA32UI;
+				default: return GL_NONE;
+			} break;
+			case Data_Type_r32: switch (channels) {
+				case 1: return GL_R32F;
+				case 2: return GL_RG32F;
+				case 3: return GL_RGB32F;
+				case 4: return GL_RGBA32F;
+				default: return GL_NONE;
+			} break;
+			default: return GL_NONE;
+		} break;
+
+		case Texture_Type_Depth: switch (data_type) {
+			case Data_Type_u16: return GL_DEPTH_COMPONENT16;
+			case Data_Type_u32: return GL_DEPTH_COMPONENT24;
+			case Data_Type_r32: return GL_DEPTH_COMPONENT32F;
+			default: return GL_NONE;
+		} break;
+
+		case Texture_Type_Stencil: switch (data_type) {
+			case Data_Type_u8: return GL_STENCIL_INDEX8;
+			default: return GL_NONE;
+		}
+
+		case Texture_Type_DStencil: switch (data_type) {
+			case Data_Type_u32: return GL_DEPTH24_STENCIL8;
+			case Data_Type_r32: return GL_DEPTH32F_STENCIL8;
+			default: return GL_NONE;
+		}
+	}
+	ENGINE_DEBUG_BREAK();
+	return GL_NONE;
+}
+
+static GLenum get_texture_data_format(enum Texture_Type texture_type, u8 channels) {
+	switch (texture_type) {
+		case Texture_Type_Color: switch (channels) {
+			case 1: return GL_RED;
+			case 2: return GL_RG;
+			case 3: return GL_RGB;
+			case 4: return GL_RGBA;
+		} break;
+
+		case Texture_Type_Depth:    return GL_DEPTH_COMPONENT;
+		case Texture_Type_DStencil: return GL_DEPTH_STENCIL;
+		case Texture_Type_Stencil:  return GL_STENCIL_INDEX;
+	}
+	ENGINE_DEBUG_BREAK();
+	return GL_NONE;
+}
+
+// static GLenum get_attachment_format(enum Texture_Type texture_type, u8 index) {
+// 	switch (texture_type) {
+// 		case Texture_Type_Color:    return GL_COLOR_ATTACHMENT0 + index;
+// 		case Texture_Type_Depth:    return GL_DEPTH_ATTACHMENT;
+// 		case Texture_Type_DStencil: return GL_DEPTH_STENCIL_ATTACHMENT;
+// 		case Texture_Type_Stencil:  return GL_STENCIL_ATTACHMENT;
+// 	}
+// 	ENGINE_DEBUG_BREAK();
+// 	return GL_NONE;
+// }
+
+static GLenum get_mesh_usage(enum Mesh_Frequency frequency, enum Mesh_Access access) {
+	switch (frequency) {
+		case Mesh_Frequency_Static: switch (access) {
+			case Mesh_Access_Draw: return GL_STATIC_DRAW;
+			case Mesh_Access_Read: return GL_STATIC_READ;
+			case Mesh_Access_Copy: return GL_STATIC_COPY;
+		} break;
+		case Mesh_Frequency_Dynamic: switch (access) {
+			case Mesh_Access_Draw: return GL_DYNAMIC_DRAW;
+			case Mesh_Access_Read: return GL_DYNAMIC_READ;
+			case Mesh_Access_Copy: return GL_DYNAMIC_COPY;
+		} break;
+		case Mesh_Frequency_Stream: switch (access) {
+			case Mesh_Access_Draw: return GL_STREAM_DRAW;
+			case Mesh_Access_Read: return GL_STREAM_READ;
+			case Mesh_Access_Copy: return GL_STREAM_COPY;
+		} break;
 	}
 	ENGINE_DEBUG_BREAK();
 	return GL_NONE;
@@ -350,19 +569,26 @@ static void impl_Shader_Uniform(u8 const * buffer) {
 
 // Mesh
 static void impl_Mesh_Allocate(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(struct Ref, ref)
+	
+	struct Asset_Mesh asset;
+	GLenum data_type = get_data_type(asset.type);
+	GLenum usage = get_mesh_usage(asset.frequency, asset.access);
+
+	(void)data_type;
+	(void)usage;
 }
 
 static void impl_Mesh_Free(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(struct Ref, ref)
 }
 
 static void impl_Mesh_Load(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(struct Ref, ref)
 }
 
 static void impl_Mesh_Use(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(struct Ref, ref)
 }
 
 // Target
@@ -374,15 +600,32 @@ static void impl_Mesh_Use(u8 const * buffer) {
 
 // Texture
 static void impl_Texture_Allocate(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(struct Ref, ref)
+
+	struct Asset_Texture asset;
+	GLenum filter_min = get_filter_min(asset.filter_mipmap, asset.filter_min);
+	GLenum filter_max = get_filter_max(asset.filter_max);
+	GLenum wrap_x = get_wrap_type(asset.wrap_x);
+	GLenum wrap_y = get_wrap_type(asset.wrap_y);
+	GLenum texture_data_type = get_texture_data_type(asset.kind, asset.type);
+	GLenum texture_internal_format = get_texture_internal_format(asset.kind, asset.type, asset.channels);
+	GLenum texture_data_format = get_texture_data_format(asset.kind, asset.channels);
+
+	(void)filter_min;
+	(void)filter_max;
+	(void)wrap_x;
+	(void)wrap_y;
+	(void)texture_data_type;
+	(void)texture_internal_format;
+	(void)texture_data_format;
 }
 
 static void impl_Texture_Free(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(struct Ref, ref)
 }
 
 static void impl_Texture_Load(u8 const * buffer) {
-	++buffer;
+	GET_VALUE(struct Ref, ref)
 }
 
 // Sampler
