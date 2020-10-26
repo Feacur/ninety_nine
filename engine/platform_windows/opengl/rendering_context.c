@@ -1,5 +1,5 @@
 #include "engine/api/code.h"
-#include "engine/api/types.h"
+#include "engine/api/primitive_types.h"
 #include "engine/api/graphics_types.h"
 #include "engine/internal/opengl/opengl.h"
 

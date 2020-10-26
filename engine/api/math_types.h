@@ -1,7 +1,7 @@
 #if !defined(ENGINE_MATH_TYPES)
 #define ENGINE_MATH_TYPES
 
-#include "engine/api/types.h"
+#include "engine/api/primitive_types.h"
 
 typedef struct vec2 { r32 x, y; } vec2;
 typedef struct vec3 { r32 x, y, z; } vec3;

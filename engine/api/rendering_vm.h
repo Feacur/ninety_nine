@@ -1,7 +1,7 @@
 #if !defined(ENGINE_RENDERING_VM)
 #define ENGINE_RENDERING_VM
 
-#include "engine/api/types.h"
+#include "engine/api/primitive_types.h"
 
 void engine_rendering_vm_init(void);
 void engine_rendering_vm_deinit(void);

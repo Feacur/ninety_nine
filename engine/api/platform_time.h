@@ -1,7 +1,7 @@
 #if !defined(ENGINE_PLATFORM_TIME)
 #define ENGINE_PLATFORM_TIME
 
-#include "engine/api/types.h"
+#include "engine/api/primitive_types.h"
 
 #define ENGINE_TIME_MILLIS (u64)1000
 #define ENGINE_TIME_MICROS (u64)1000000

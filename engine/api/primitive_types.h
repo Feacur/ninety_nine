@@ -1,5 +1,5 @@
-#if !defined(ENGINE_TYPES)
-#define ENGINE_TYPES
+#if !defined(ENGINE_PRIMITIVE_TYPES)
+#define ENGINE_PRIMITIVE_TYPES
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -19,4 +19,4 @@ typedef double r64;
 
 typedef char const * cstring;
 
-#endif // ENGINE_TYPES
+#endif // ENGINE_PRIMITIVE_TYPES

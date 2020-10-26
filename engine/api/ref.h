@@ -1,7 +1,7 @@
 #if !defined(ENGINE_REF)
 #define ENGINE_REF
 
-#include "engine/api/types.h"
+#include "engine/api/primitive_types.h"
 
 struct Ref {
 	u32 id, gen;

@@ -1,7 +1,7 @@
 #if !defined(ENGINE_LIBRARY_CONTEXT)
 #define ENGINE_LIBRARY_CONTEXT
 
-#include "engine/api/types.h"
+#include "engine/api/primitive_types.h"
 #include <Windows.h>
 
 void engine_load_functions(void);
